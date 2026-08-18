@@ -1,0 +1,153 @@
+import mongoose from 'mongoose'
+import Application, { APPLICATION_STATUSES } from '../models/application.model.js'
+import Job from '../models/job.model.js'
+import ApiError from '../utils/ApiError.js'
+
+// Fields populated on job when returning applications.
+// Excludes: description, requirements, responsibilities, salary, notes,
+// user (internal ownership), __v, postedAt, deadline — not needed for tracking view.
+const JOB_POPULATE_SELECT =
+  '_id title company location employmentType workplaceType skills source sourceUrl'
+
+const validateObjectId = (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, 'Invalid application ID')
+  }
+}
+
+const handleE11000 = (err) => {
+  if (err.code === 11000) {
+    throw new ApiError(409, 'You have already applied to this job')
+  }
+  throw err
+}
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const listApplications = async (userId, query = {}) => {
+  const { status, search, page, limit } = query
+
+  let statusFilter
+  if (status !== undefined && status !== '') {
+    if (!APPLICATION_STATUSES.includes(status)) {
+      throw new ApiError(400, 'Invalid status filter')
+    }
+    statusFilter = status
+  }
+
+  const parsedPage = parseInt(page, 10)
+  const parsedLimit = parseInt(limit, 10)
+
+  const normalizedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
+  const normalizedLimit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 100) : 20
+
+  let searchJobIds = null
+  if (search !== undefined && String(search).trim() !== '') {
+    const regex = new RegExp(escapeRegExp(String(search).trim()), 'i')
+    const matchingJobs = await Job.find({
+      user: userId,
+      $or: [{ title: regex }, { company: regex }],
+    }).select('_id')
+    searchJobIds = matchingJobs.map((job) => job._id)
+    if (searchJobIds.length === 0) {
+      return {
+        applications: [],
+        pagination: { page: normalizedPage, limit: normalizedLimit, total: 0, totalPages: 0 },
+      }
+    }
+  }
+
+  const filter = { user: userId }
+  if (statusFilter) filter.status = statusFilter
+  if (searchJobIds) filter.job = { $in: searchJobIds }
+
+  const total = await Application.countDocuments(filter)
+  const applications = await Application.find(filter)
+    .sort({ createdAt: -1 })
+    .skip((normalizedPage - 1) * normalizedLimit)
+    .limit(normalizedLimit)
+    .populate('job', JOB_POPULATE_SELECT)
+
+  return {
+    applications,
+    pagination: {
+      page: normalizedPage,
+      limit: normalizedLimit,
+      total,
+      totalPages: Math.ceil(total / normalizedLimit),
+    },
+  }
+}
+
+const getApplication = async (userId, applicationId) => {
+  validateObjectId(applicationId)
+  const application = await Application.findOne({
+    _id: applicationId,
+    user: userId,
+  }).populate('job', JOB_POPULATE_SELECT)
+  if (!application) {
+    throw new ApiError(404, 'Application not found')
+  }
+  return application
+}
+
+const createApplication = async (userId, data) => {
+  // 1. Validate job ObjectId format (already validated by Zod, but guard here too)
+  if (!mongoose.Types.ObjectId.isValid(data.job)) {
+    throw new ApiError(400, 'Invalid job ID')
+  }
+
+  // 2. Verify job exists AND belongs to the authenticated user.
+  //    A user cannot apply to another user's job.
+  const job = await Job.findOne({ _id: data.job, user: userId })
+  if (!job) {
+    throw new ApiError(404, 'Job not found')
+  }
+
+  // 3. Create the application
+  try {
+    const application = await Application.create({ ...data, user: userId })
+    return application
+  } catch (err) {
+    handleE11000(err)
+  }
+}
+
+const updateApplication = async (userId, applicationId, data) => {
+  validateObjectId(applicationId)
+  // `data` has already been stripped by Zod — `user` and `job` cannot be present.
+  try {
+    const application = await Application.findOneAndUpdate(
+      { _id: applicationId, user: userId },
+      { $set: data },
+      { new: true, runValidators: true }
+    ).populate('job', JOB_POPULATE_SELECT)
+    if (!application) {
+      throw new ApiError(404, 'Application not found')
+    }
+    return application
+  } catch (err) {
+    if (err instanceof ApiError) throw err
+    handleE11000(err)
+  }
+}
+
+const deleteApplication = async (userId, applicationId) => {
+  validateObjectId(applicationId)
+  const application = await Application.findOneAndDelete({
+    _id: applicationId,
+    user: userId,
+  })
+  if (!application) {
+    throw new ApiError(404, 'Application not found')
+  }
+}
+
+export {
+  listApplications,
+  getApplication,
+  createApplication,
+  updateApplication,
+  deleteApplication,
+}
