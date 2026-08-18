@@ -1,0 +1,7 @@
+{
+  "execMap": {
+    "js": "C:/Program Files/nodejs/node.exe"
+  },
+  "watch": ["src"],
+  "ext": "js,json"
+}

@@ -1,0 +1,175 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import PageHeader from '../components/PageHeader.jsx'
+import Loading from '../components/Loading.jsx'
+import ErrorMessage from '../components/ErrorMessage.jsx'
+import EmptyState from '../components/EmptyState.jsx'
+import Pagination from '../components/Pagination.jsx'
+import InterviewCard from '../components/interviews/InterviewCard.jsx'
+import { listInterviewsApi, deleteInterviewApi } from '../api/interviews.api.js'
+import { INTERVIEW_STATUSES } from '../utils/constants.js'
+
+export default function InterviewsPage() {
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const [page, setPage] = useState(1)
+  const [reloadKey, setReloadKey] = useState(0)
+
+  const [interviews, setInterviews] = useState([])
+  const [pagination, setPagination] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
+
+  // Lightweight debounce (no library).
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 350)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  const handleSearchChange = (event) => {
+    setSearchInput(event.target.value)
+    setPage(1)
+  }
+
+  const handleStatusChange = (value) => {
+    setStatus(value)
+    setPage(1)
+  }
+
+  const clearFilters = () => {
+    setSearchInput('')
+    setSearch('')
+    setStatus('')
+    setPage(1)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      setLoading(true)
+      setLoadError(null)
+      try {
+        const res = await listInterviewsApi({ status, search, page })
+        if (cancelled) return
+        setInterviews(res.data.interviews)
+        setPagination(res.data.pagination)
+      } catch (err) {
+        if (!cancelled) setLoadError({ message: err.message })
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [status, search, page, reloadKey])
+
+  const handleDelete = async (interview) => {
+    if (!window.confirm(`Delete interview "${interview.title}"? This cannot be undone.`)) return
+    setDeletingId(interview._id)
+    setActionError(null)
+    try {
+      await deleteInterviewApi(interview._id)
+      setReloadKey((key) => key + 1)
+    } catch (err) {
+      setActionError({ message: err.message })
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const hasFilters = Boolean(search || status)
+
+  return (
+    <div className="page">
+      <PageHeader title="Interviews" subtitle="Keep track of your upcoming and past interviews." />
+
+      <div className="job-filters">
+        <input
+          type="search"
+          className="form__input"
+          placeholder="Search by job title or company..."
+          aria-label="Search interviews"
+          value={searchInput}
+          onChange={handleSearchChange}
+        />
+        <select
+          className="form__input"
+          aria-label="Filter by status"
+          value={status}
+          onChange={(event) => handleStatusChange(event.target.value)}
+        >
+          <option value="">All statuses</option>
+          {INTERVIEW_STATUSES.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {actionError && <ErrorMessage title="Could not delete interview" message={actionError.message} />}
+
+      {loading && <Loading label="Loading interviews..." />}
+
+      {!loading && loadError && (
+        <div className="page__error">
+          <ErrorMessage title="Could not load interviews" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && interviews.length === 0 && (
+        hasFilters ? (
+          <EmptyState
+            title="No matching interviews"
+            description="Try adjusting your search or filters."
+            action={
+              <button type="button" className="btn btn--ghost" onClick={clearFilters}>
+                Clear filters
+              </button>
+            }
+          />
+        ) : (
+          <EmptyState
+            title="No interviews yet"
+            description="Add an interview from an application detail page to keep track of it."
+            action={
+              <Link to="/applications" className="btn btn--primary">
+                Go to applications
+              </Link>
+            }
+          />
+        )
+      )}
+
+      {!loading && !loadError && interviews.length > 0 && (
+        <div className="interview-list">
+          {interviews.map((interview) => (
+            <InterviewCard
+              key={interview._id}
+              interview={interview}
+              deleting={deletingId === interview._id}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
+
+      {!loading && !loadError && pagination && (
+        <Pagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          total={pagination.total}
+          onChange={setPage}
+        />
+      )}
+    </div>
+  )
+}
