@@ -173,8 +173,7 @@ export default function ResumePage() {
     setSaveError(null)
     setSuccessMessage(null)
     try {
-      await updateResumeApi(buildPayload(form))
-      const res = await getResumeApi()
+      const res = await updateResumeApi(buildPayload(form))
       setForm(hydrateResume(res.data.resume || {}))
       setHasResume(true)
       setEditing(false)
@@ -197,7 +196,11 @@ export default function ResumePage() {
       setHasResume(false)
       setEditing(false)
     } catch (err) {
-      if (err.status !== 404) {
+      if (err.status === 404) {
+        setForm(emptyResume())
+        setHasResume(false)
+        setEditing(false)
+      } else {
         setSaveError({ message: err.message })
       }
     } finally {

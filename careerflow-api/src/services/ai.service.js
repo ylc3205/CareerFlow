@@ -69,6 +69,65 @@ const generateMockAnswerEvaluation = (questionText) => {
   }
 }
 
+// Deterministic mock resume parse. The output passes the same Zod schema as the
+// real provider result and is validated through the same normalize path.
+const generateMockResumeParse = () => ({
+  title: 'Backend Developer Resume',
+  summary: 'Backend developer with experience designing and building REST APIs using Node.js, Express and MongoDB.',
+  skills: ['Node.js', 'Express.js', 'MongoDB', 'REST APIs', 'JavaScript'],
+  languages: ['English', 'Vietnamese'],
+  experience: [
+    {
+      company: 'TechCorp Vietnam',
+      position: 'Backend Developer',
+      description: 'Designed and built REST APIs with Node.js, Express.js and MongoDB.',
+      startDate: '2022-03-01',
+      current: true,
+    },
+    {
+      company: 'Startup Lab',
+      position: 'Backend Intern',
+      description: 'Implemented API endpoints and automated database migrations.',
+      startDate: '2021-06-01',
+      endDate: '2021-12-31',
+    },
+  ],
+  education: [
+    {
+      school: 'HCMUT',
+      degree: 'Bachelor of Science',
+      fieldOfStudy: 'Computer Science',
+      startDate: '2017-09-01',
+      endDate: '2021-06-01',
+    },
+  ],
+  projects: [
+    {
+      name: 'CareerFlow',
+      description: 'AI-powered job application management platform.',
+      url: '',
+      techStack: ['Node.js', 'MongoDB', 'React'],
+    },
+  ],
+  certifications: [
+    {
+      name: 'AWS Certified Developer - Associate',
+      issuer: 'Amazon Web Services',
+      issueDate: '2023-05-01',
+      expiryDate: '',
+      url: '',
+    },
+  ],
+  profile: {
+    fullName: 'Test Candidate',
+    phone: '',
+    location: 'Ho Chi Minh City',
+    headline: 'Backend Developer',
+    yearsOfExperience: 3,
+  },
+  careerDirections: ['Backend Developer', 'Node.js Developer', 'Fullstack Developer'],
+})
+
 const parseJson = (text) => {
   if (!text) return null
   let str = String(text).trim()
@@ -140,4 +199,28 @@ const generateAnswerEvaluationJSON = async (prompt, schema) => {
   }
 }
 
-export { generateStructuredJSON, generateInterviewPreparationJSON, generateAnswerEvaluationJSON }
+const generateResumeParseJSON = async (prompt, schema) => {
+  if (AI_MOCK) {
+    return generateMockResumeParse()
+  }
+
+  const providerName = process.env.DEFAULT_AI_PROVIDER || 'gemini'
+  const provider = providers[providerName]
+  if (!provider) {
+    throw new ApiError(503, 'AI Service Unavailable')
+  }
+
+  try {
+    const text = await provider(prompt, schema)
+    return parseJson(text)
+  } catch {
+    throw new ApiError(503, 'AI Service Unavailable')
+  }
+}
+
+export {
+  generateStructuredJSON,
+  generateInterviewPreparationJSON,
+  generateAnswerEvaluationJSON,
+  generateResumeParseJSON,
+}

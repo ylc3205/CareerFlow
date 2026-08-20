@@ -18,6 +18,7 @@ import Application from '../src/models/application.model.js'
 import Job from '../src/models/job.model.js'
 import Profile from '../src/models/profile.model.js'
 import Resume from '../src/models/resume.model.js'
+import User from '../src/models/user.model.js'
 import ApiError from '../src/utils/ApiError.js'
 import { normalizePreparation } from '../src/services/interviewPreparation.service.js'
 
@@ -27,7 +28,9 @@ const BASE_JOBS = `${BASE}/jobs`
 const BASE_APP = `${BASE}/applications`
 const BASE_INT = `${BASE}/interviews`
 
-const PASSWORD = 'password123'
+// Complexity-valid fixture password (lowercase + uppercase + digit + special),
+// required since the register policy rejects weak passwords on fresh accounts.
+const PASSWORD = 'Str0ng!pass'
 
 const CATEGORIES = ['technical', 'behavioral', 'situational']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -120,6 +123,18 @@ const run = async () => {
 
   // ── Setup ───────────────────────────────────────────────
   console.log('\n[Setup] Preparing test users and data...')
+
+  // Remove stale test users (created under an older password policy) so fresh
+  // registration with the strong-password requirement is deterministic.
+  const testEmails = [
+    'prep-main@example.com',
+    'prep-other@example.com',
+    'prep-nodata@example.com',
+    'prep-profile@example.com',
+    'prep-resume@example.com',
+    'prep-missingjob@example.com',
+  ]
+  await User.deleteMany({ email: { $in: testEmails } })
 
   const main = await ensureUser('prep-main@example.com')
   const other = await ensureUser('prep-other@example.com')
@@ -307,6 +322,47 @@ const run = async () => {
     check('identical questions returned (deterministic reuse)', JSON.stringify(body.data?.preparation?.questions) === JSON.stringify(firstBody.data?.preparation?.questions))
     const count = await InterviewPreparation.countDocuments({ user: main.userId, interview: intMain })
     check('still exactly 1 preparation (no second creation)', count === 1)
+  }
+
+  // ── 11b. GET preparation — existing preparation ─────────
+  console.log('\n[11b] GET existing preparation (restores without AI)')
+  {
+    const { status, body } = await req('GET', prepUrl(intMain), undefined, authH(main.token))
+    check('expect 200', status === 200)
+    check('expect success=true', body.success === true)
+    check('expect data.preparation present', !!body.data?.preparation)
+    check('same preparation _id as POST', String(body.data?.preparation?._id) === String(firstBody.data?.preparation?._id))
+    check('identical questions (persisted through page reload)', JSON.stringify(body.data?.preparation?.questions) === JSON.stringify(firstBody.data?.preparation?.questions))
+    const count = await InterviewPreparation.countDocuments({ user: main.userId, interview: intMain })
+    check('GET did not create another preparation', count === 1)
+  }
+
+  // ── 11c. GET preparation — no preparation yet ───────────
+  console.log('\n[11c] GET owned interview with no preparation returns null')
+  {
+    const { status, body } = await req('GET', prepUrl(intNodata), undefined, authH(nodata.token))
+    check('expect 200', status === 200)
+    check('expect success=true', body.success === true)
+    check('expect data.preparation === null', body.data?.preparation === null)
+  }
+
+  // ── 11d. GET preparation — ownership / errors ───────────
+  console.log('\n[11d] GET preparation ownership and validation')
+  {
+    const missing = await req('GET', prepUrl(intMain), undefined)
+    check('missing JWT -> 401', missing.status === 401)
+    check('missing JWT -> success=false', missing.body.success === false)
+
+    const malformed = await req('GET', prepUrl('not-an-object-id'), undefined, authH(main.token))
+    check('malformed interview id -> 400', malformed.status === 400)
+    check('malformed interview id message', malformed.body.message === 'Invalid interview ID')
+
+    const cross = await req('GET', prepUrl(intOther), undefined, authH(main.token))
+    check('cross-user interview -> 404', cross.status === 404)
+    check('cross-user interview message', cross.body.message === 'Interview not found')
+
+    const nonexistent = await req('GET', prepUrl('6a7c000000000000000000ff'), undefined, authH(main.token))
+    check('nonexistent interview -> 404', nonexistent.status === 404)
   }
 
   // ── 12. Missing Job / Application (400) ─────────────────

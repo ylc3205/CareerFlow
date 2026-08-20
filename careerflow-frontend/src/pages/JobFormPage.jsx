@@ -15,6 +15,7 @@ export default function JobFormPage() {
   const [initialValues, setInitialValues] = useState(emptyJobForm)
   const [loading, setLoading] = useState(isEdit)
   const [loadError, setLoadError] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError] = useState(null)
 
@@ -36,7 +37,7 @@ export default function JobFormPage() {
     return () => {
       cancelled = true
     }
-  }, [id, isEdit])
+  }, [id, isEdit, reloadKey])
 
   const handleSubmit = async (payload) => {
     setSubmitting(true)
@@ -61,7 +62,17 @@ export default function JobFormPage() {
   }
 
   if (loadError) {
-    return <ErrorMessage title="Could not load job" message={loadError.message} />
+    return (
+      <div className="page">
+        <PageHeader title="Job" subtitle="Could not load this job." />
+        <div className="page__error">
+          <ErrorMessage title="Could not load job" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

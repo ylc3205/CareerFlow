@@ -552,11 +552,16 @@ p {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .topbar__email {
   font-size: 13px;
   color: var(--color-text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-content {
@@ -1417,6 +1422,10 @@ p {
 
   .nav-section {
     gap: 4px;
+  }
+
+  .nav-section__label {
+    display: none;
   }
 
   .nav-section__links {

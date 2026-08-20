@@ -37,7 +37,7 @@ const run = async () => {
   {
     const { body } = await req('POST', `${BASE_AUTH}/login`, {
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Str0ng!pass',
     })
     if (!body.data?.accessToken) {
       console.error('\n[FATAL] Cannot login test@example.com. Run test-auth.js first.')
@@ -52,11 +52,11 @@ const run = async () => {
     // Register user2 if not exists
     await req('POST', `${BASE_AUTH}/register`, {
       email: 'test2@example.com',
-      password: 'password123',
+      password: 'Str0ng!pass',
     })
     const { body } = await req('POST', `${BASE_AUTH}/login`, {
       email: 'test2@example.com',
-      password: 'password123',
+      password: 'Str0ng!pass',
     })
     if (!body.data?.accessToken) {
       console.error('\n[FATAL] Cannot login test2@example.com.')

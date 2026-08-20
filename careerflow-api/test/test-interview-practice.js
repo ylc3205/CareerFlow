@@ -27,7 +27,8 @@ const BASE_JOBS = `${BASE}/jobs`
 const BASE_APP = `${BASE}/applications`
 const BASE_INT = `${BASE}/interviews`
 
-const PASSWORD = 'password123'
+// Complexity-valid fixture password (register policy rejects weak passwords).
+const PASSWORD = 'Str0ng!pass'
 
 const CATEGORIES = ['technical', 'behavioral', 'situational']
 const DIFFICULTIES = ['easy', 'medium', 'hard']

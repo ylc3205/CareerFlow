@@ -41,4 +41,39 @@ export const updateResumeSchema = z.object({
   projects: z.array(resumeProjectSchema).optional(),
   certifications: z.array(resumeCertificationSchema).optional(),
   languages: z.array(z.string().max(100)).optional(),
+  careerDirections: z
+    .array(
+      z.object({
+        title: z.string().max(200).optional(),
+        description: z.string().max(500).optional(),
+      })
+    )
+    .optional(),
 })
+
+// Zod schema the AI resume parsing output must satisfy before it is stored as
+// the user-reviewable draft. Mirrors updateResumeSchema plus the AI-only
+// `profile` suggestion and `careerDirections` suggestions.
+export const resumeParseSchema = z.object({
+  title: z.string().max(200).optional(),
+  summary: z.string().max(3000).optional(),
+  skills: z.array(z.string().max(100)).optional(),
+  languages: z.array(z.string().max(100)).optional(),
+  experience: z.array(resumeExperienceSchema).optional(),
+  education: z.array(resumeEducationSchema).optional(),
+  projects: z.array(resumeProjectSchema).optional(),
+  certifications: z.array(resumeCertificationSchema).optional(),
+  careerDirections: z.array(z.string().max(200)).optional(),
+  profile: z
+    .object({
+      fullName: z.string().max(100).optional(),
+      phone: z.string().max(30).optional(),
+      location: z.string().max(200).optional(),
+      headline: z.string().max(200).optional(),
+      yearsOfExperience: z.number().min(0).optional(),
+    })
+    .optional(),
+})
+
+// Body accepted by POST /api/resume/confirm — the user-confirmed Resume data.
+export const confirmResumeSchema = updateResumeSchema

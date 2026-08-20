@@ -24,6 +24,7 @@ router.post('/', validate(createInterviewSchema), interviewController.createInte
 router.get('/:id', interviewController.getInterview)
 router.patch('/:id', validate(updateInterviewSchema), interviewController.updateInterview)
 router.delete('/:id', interviewController.deleteInterview)
+router.get('/:id/preparation', interviewPreparationController.getPreparation)
 router.post('/:id/preparation', interviewPreparationController.generatePreparation)
 
 router.post('/:id/practice', practiceSessionController.createSession)

@@ -34,11 +34,14 @@ export const buildInterviewPayload = (form, { includeApplicationId = false, appl
     type: form.type || undefined,
     scheduledDate: form.scheduledDate || undefined,
     status: form.status || undefined,
-    interviewerNames: String(form.interviewerNames || '').trim() || undefined,
-    meetingLink: String(form.meetingLink || '').trim() || undefined,
-    location: String(form.location || '').trim() || undefined,
-    notes: String(form.notes || '').trim() || undefined,
-    feedback: String(form.feedback || '').trim() || undefined,
+    // Free-text optional fields are always included (even as '') so that
+    // clearing a box sends '' and $set actually clears the stored value.
+    // Required dates and enum fields are never sent as ''.
+    interviewerNames: String(form.interviewerNames || '').trim(),
+    meetingLink: String(form.meetingLink || '').trim(),
+    location: String(form.location || '').trim(),
+    notes: String(form.notes || '').trim(),
+    feedback: String(form.feedback || '').trim(),
   })
   if (includeApplicationId && applicationId) payload.application = applicationId
   return payload

@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import QuestionList from './QuestionList.jsx'
-import { generatePreparationApi } from '../../api/interviews.api.js'
+import { getPreparationApi, generatePreparationApi } from '../../api/interviews.api.js'
 
 // Backend contract (source of truth):
+//   GET  /api/interviews/:id/preparation -> { data: { preparation: { questions } } }
+//     preparation is null when none exists yet. Never triggers AI.
 //   POST /api/interviews/:id/preparation -> { data: { preparation: { questions } } }
 //   questions: [{ question, category, difficulty }], 5-10 items.
 //   400 when no Profile/Resume (or interview has no linked job)
@@ -15,8 +17,8 @@ import { generatePreparationApi } from '../../api/interviews.api.js'
 //
 // Preparation is CACHED per user + interview on the backend, so a successful
 // generation is final — there is deliberately no "regenerate" action.
-// Because no GET endpoint exists, the frontend cannot know about existing
-// preparation on page load, so generation always requires explicit user action.
+// The frontend loads any existing preparation on mount via GET; the Generate
+// button only triggers the POST (AI) when no preparation exists.
 
 const validationErrorMessage = 'The interview questions could not be loaded. Please try again.'
 
@@ -33,6 +35,32 @@ export default function PreparationSection({ interviewId }) {
   const [status, setStatus] = useState('idle') // idle | generating | success | error
   const [questions, setQuestions] = useState([])
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true) // initial GET in flight
+  const [loadError, setLoadError] = useState(null)
+
+  const loadExisting = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    try {
+      const res = await getPreparationApi(interviewId)
+      const items = res.data?.preparation?.questions
+      if (Array.isArray(items) && items.length > 0 && items.every(isQuestionValid)) {
+        setQuestions(items)
+        setStatus('success')
+      } else {
+        // No existing preparation (or it is unusable) -> show the Generate CTA.
+        setStatus('idle')
+      }
+    } catch (err) {
+      setLoadError({ message: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }, [interviewId])
+
+  useEffect(() => {
+    loadExisting()
+  }, [loadExisting])
 
   const handleGenerate = async () => {
     setStatus('generating')
@@ -68,53 +96,72 @@ export default function PreparationSection({ interviewId }) {
         </p>
       </header>
 
-      {status === 'idle' && (
-        <div className="prep__cta">
-          <button type="button" className="btn btn--primary" onClick={handleGenerate}>
-            Generate Interview Questions
+      {loading && (
+        <div className="prep__loading">
+          <Loading label="Checking for existing preparation…" />
+        </div>
+      )}
+
+      {!loading && loadError && (
+        <div className="prep__error">
+          <ErrorMessage title="Could not load interview preparation" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={loadExisting}>
+            Retry
           </button>
         </div>
       )}
 
-      {status === 'generating' && (
-        <div className="prep__loading">
-          <Loading label="Generating personalized interview questions…" />
-        </div>
-      )}
-
-      {status === 'success' && (
-        <div className="prep__result">
-          <QuestionList questions={questions} />
-          <p className="prep__next-step">Answer these questions in the Interview Practice section below.</p>
-        </div>
-      )}
-
-      {status === 'error' && error && (
-        <div className="prep__error">
-          {error.missingProfileResume ? (
-            <>
-              <ErrorMessage
-                title="Profile or resume required"
-                message="Create a profile or add a resume before generating interview questions."
-              />
-              <div className="prep__error-actions">
-                <Link to="/profile" className="btn btn--primary btn--sm">
-                  Go to Profile
-                </Link>
-                <Link to="/resume" className="btn btn--ghost btn--sm">
-                  Go to Resume
-                </Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <ErrorMessage title="Unable to generate interview questions right now." message={error.message} errors={error.errors} />
-              <button type="button" className="btn btn--ghost btn--sm" onClick={handleGenerate}>
-                Try again
+      {!loading && !loadError && (
+        <>
+          {status === 'idle' && (
+            <div className="prep__cta">
+              <button type="button" className="btn btn--primary" onClick={handleGenerate}>
+                Generate Interview Questions
               </button>
-            </>
+            </div>
           )}
-        </div>
+
+          {status === 'generating' && (
+            <div className="prep__loading">
+              <Loading label="Generating personalized interview questions…" />
+            </div>
+          )}
+
+          {status === 'success' && (
+            <div className="prep__result">
+              <QuestionList questions={questions} />
+              <p className="prep__next-step">Answer these questions in the Interview Practice section below.</p>
+            </div>
+          )}
+
+          {status === 'error' && error && (
+            <div className="prep__error">
+              {error.missingProfileResume ? (
+                <>
+                  <ErrorMessage
+                    title="Profile or resume required"
+                    message="Create a profile or add a resume before generating interview questions."
+                  />
+                  <div className="prep__error-actions">
+                    <Link to="/profile" className="btn btn--primary btn--sm">
+                      Go to Profile
+                    </Link>
+                    <Link to="/resume" className="btn btn--ghost btn--sm">
+                      Go to Resume
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ErrorMessage title="Unable to generate interview questions right now." message={error.message} errors={error.errors} />
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={handleGenerate}>
+                    Try again
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
     </section>
   )

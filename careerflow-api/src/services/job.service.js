@@ -99,11 +99,19 @@ const createJob = async (userId, data) => {
 
 const updateJob = async (userId, jobId, data) => {
   validateObjectId(jobId)
+  // Clearing sourceUrl: '' is normalized away by normalizeSourceUrl, so a plain
+  // $set would silently keep the old value. $unset it so the stored value is
+  // actually removed (and the partial unique index stays clean).
+  const unset = {}
+  if (data.sourceUrl === '') {
+    unset.sourceUrl = 1
+    delete data.sourceUrl
+  }
   normalizeSourceUrl(data)
   try {
     const job = await Job.findOneAndUpdate(
       { _id: jobId, user: userId },
-      { $set: data },
+      { $set: data, ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}) },
       { new: true, runValidators: true }
     )
     if (!job) {

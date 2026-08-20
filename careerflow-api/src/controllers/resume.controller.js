@@ -19,6 +19,42 @@ const updateResume = catchAsync(async (req, res) => {
   })
 })
 
+const uploadResume = catchAsync(async (req, res) => {
+  const resume = await resumeService.uploadResume(req.user.userId, req.file)
+
+  res.status(200).json({
+    success: true,
+    data: { resume },
+  })
+})
+
+const parseResume = catchAsync(async (req, res) => {
+  const { resume, draft } = await resumeService.parseResume(req.user.userId)
+
+  res.status(200).json({
+    success: true,
+    data: { resume, draft },
+  })
+})
+
+const confirmResume = catchAsync(async (req, res) => {
+  const resume = await resumeService.confirmResume(req.user.userId, req.body)
+
+  res.status(200).json({
+    success: true,
+    data: { resume },
+  })
+})
+
+const discardDraft = catchAsync(async (req, res) => {
+  const resume = await resumeService.discardDraft(req.user.userId)
+
+  res.status(200).json({
+    success: true,
+    data: { resume },
+  })
+})
+
 const deleteResume = catchAsync(async (req, res) => {
   await resumeService.deleteResume(req.user.userId)
 
@@ -28,4 +64,4 @@ const deleteResume = catchAsync(async (req, res) => {
   })
 })
 
-export { getResume, updateResume, deleteResume }
+export { getResume, updateResume, uploadResume, parseResume, confirmResume, discardDraft, deleteResume }

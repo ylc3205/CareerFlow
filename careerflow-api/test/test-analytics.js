@@ -27,7 +27,8 @@ const BASE_APP = `${BASE}/applications`
 const BASE_INT = `${BASE}/interviews`
 const BASE_AN = `${BASE}/analytics`
 
-const PASSWORD = 'password123'
+// Complexity-valid fixture password (register policy rejects weak passwords).
+const PASSWORD = 'Str0ng!pass'
 
 const mockEval = (questionText) => {
   const hash = Array.from(String(questionText)).reduce((acc, ch) => acc + ch.charCodeAt(0), 0)

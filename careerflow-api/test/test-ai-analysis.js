@@ -20,7 +20,8 @@ const BASE_AUTH = `${BASE}/auth`
 const BASE_JOBS = `${BASE}/jobs`
 const BASE_PROFILE = `${BASE}/profile`
 
-const PASSWORD = 'password123'
+// Complexity-valid fixture password (register policy rejects weak passwords).
+const PASSWORD = 'Str0ng!pass'
 
 let passed = 0
 let failed = 0

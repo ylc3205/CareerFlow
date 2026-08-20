@@ -20,7 +20,9 @@ export const hydrateApplicationForm = (application) => ({
 export const buildApplicationPayload = (form) => {
   const payload = { status: form.status }
   if (form.appliedAt) payload.appliedAt = form.appliedAt
-  if (String(form.coverLetter || '').trim()) payload.coverLetter = String(form.coverLetter).trim()
-  if (String(form.notes || '').trim()) payload.notes = String(form.notes).trim()
+  // Always include the free-text fields (even when empty) so a cleared box
+  // is sent as '' and $set actually clears the stored value.
+  payload.coverLetter = String(form.coverLetter || '').trim()
+  payload.notes = String(form.notes || '').trim()
   return payload
 }

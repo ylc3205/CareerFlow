@@ -21,7 +21,7 @@ const BASE_JOBS = `${BASE}/jobs`
 const BASE_PROFILE = `${BASE}/profile`
 const BASE_RESUME = `${BASE}/resume`
 
-const PASSWORD = 'password123'
+const PASSWORD = 'Str0ng!pass'
 
 let passed = 0
 let failed = 0

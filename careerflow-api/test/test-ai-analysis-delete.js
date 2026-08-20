@@ -21,7 +21,7 @@ const BASE_AUTH = `${BASE}/auth`
 const BASE_JOBS = `${BASE}/jobs`
 const BASE_ANALYSES = `${BASE}/ai-analyses`
 
-const PASSWORD = 'password123'
+const PASSWORD = 'Str0ng!pass'
 
 let passed = 0
 let failed = 0

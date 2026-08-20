@@ -52,7 +52,7 @@ const run = async () => {
   {
     const { body } = await post(`${BASE_AUTH}/login`, {
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Str0ng!pass',
     })
     if (!body.data?.accessToken) {
       console.error('\nCould not login. Run test-auth.js first.')

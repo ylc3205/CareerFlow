@@ -83,7 +83,17 @@ export default function InterviewDetailPage() {
   }
 
   if (loadError) {
-    return <ErrorMessage title="Could not load interview" message={loadError.message} />
+    return (
+      <div className="page">
+        <PageHeader title="Interview" subtitle="Could not load this interview." />
+        <div className="page__error">
+          <ErrorMessage title="Could not load interview" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!interview) {

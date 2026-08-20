@@ -33,7 +33,7 @@ const run = async () => {
   {
     const { body } = await req('POST', `${BASE_AUTH}/login`, {
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Str0ng!pass',
     })
     if (!body.data?.accessToken) {
       console.error('\n[FATAL] Could not login. Ensure test@example.com exists.')

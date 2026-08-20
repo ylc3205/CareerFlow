@@ -5,6 +5,7 @@ import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import Badge from '../components/Badge.jsx'
 import Card from '../components/Card.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 import ApplicationForm from '../components/applications/ApplicationForm.jsx'
 import ApplicationStatusTimeline from '../components/applications/ApplicationStatusTimeline.jsx'
 import InterviewForm from '../components/interviews/InterviewForm.jsx'
@@ -32,6 +33,8 @@ export default function ApplicationDetailPage() {
   const [savingInterview, setSavingInterview] = useState(false)
   const [interviewFormError, setInterviewFormError] = useState(null)
   const [interviews, setInterviews] = useState([])
+  const [interviewsLoading, setInterviewsLoading] = useState(false)
+  const [interviewsError, setInterviewsError] = useState(null)
   const [interviewsReloadKey, setInterviewsReloadKey] = useState(0)
 
   const [deleting, setDeleting] = useState(false)
@@ -61,12 +64,16 @@ export default function ApplicationDetailPage() {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
+      setInterviewsLoading(true)
+      setInterviewsError(null)
       try {
         const res = await listInterviewsApi({ application: id })
         if (cancelled) return
         setInterviews(res.data.interviews)
-      } catch {
-        // Interviews are a secondary section; fail silently on load.
+      } catch (err) {
+        if (!cancelled) setInterviewsError({ message: err.message })
+      } finally {
+        if (!cancelled) setInterviewsLoading(false)
       }
     }
     load()
@@ -127,7 +134,17 @@ export default function ApplicationDetailPage() {
   }
 
   if (loadError) {
-    return <ErrorMessage title="Could not load application" message={loadError.message} />
+    return (
+      <div className="page">
+        <PageHeader title="Application" subtitle="Could not load this application." />
+        <div className="page__error">
+          <ErrorMessage title="Could not load application" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!application) {
@@ -248,9 +265,23 @@ export default function ApplicationDetailPage() {
                   </button>
                 )}
               </div>
-              {interviews.length === 0 ? (
-                <p className="job-detail__empty">No interviews yet.</p>
-              ) : (
+              {interviewsLoading && <Loading label="Loading interviews…" />}
+              {!interviewsLoading && interviewsError && (
+                <div className="page__error">
+                  <ErrorMessage title="Could not load interviews" message={interviewsError.message} />
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => setInterviewsReloadKey((key) => key + 1)}
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+              {!interviewsLoading && !interviewsError && interviews.length === 0 && (
+                <EmptyState title="No interviews yet" description="Add an interview to track it here." />
+              )}
+              {!interviewsLoading && !interviewsError && interviews.length > 0 && (
                 <ul className="interview-list">
                   {interviews.map((interview) => (
                     <li key={interview._id} className="interview-list__item">

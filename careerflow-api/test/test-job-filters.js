@@ -19,7 +19,7 @@ const BASE = 'http://localhost:5000/api'
 const BASE_AUTH = `${BASE}/auth`
 const BASE_JOBS = `${BASE}/jobs`
 
-const PASSWORD = 'password123'
+const PASSWORD = 'Str0ng!pass'
 
 let passed = 0
 let failed = 0

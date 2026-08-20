@@ -61,19 +61,22 @@ export const buildJobPayload = (form) => {
   return compact({
     title: String(form.title || '').trim(),
     company: String(form.company || '').trim(),
-    location: String(form.location || '').trim() || undefined,
+    // Free-text optional fields are always included (even as '') so that
+    // clearing a box sends '' and $set actually clears the stored value.
+    // Enum fields and required date fields are never sent as ''.
+    location: String(form.location || '').trim(),
     employmentType: form.employmentType || undefined,
     workplaceType: form.workplaceType || undefined,
     status: form.status || undefined,
-    description: String(form.description || '').trim() || undefined,
-    requirements: String(form.requirements || '').trim() || undefined,
-    responsibilities: String(form.responsibilities || '').trim() || undefined,
+    description: String(form.description || '').trim(),
+    requirements: String(form.requirements || '').trim(),
+    responsibilities: String(form.responsibilities || '').trim(),
     skills: splitList(form.skills),
-    salary: Object.keys(salary).length ? salary : undefined,
-    source: String(form.source || '').trim() || undefined,
-    sourceUrl: String(form.sourceUrl || '').trim() || undefined,
+    salary: Object.keys(salary).length ? salary : {},
+    source: String(form.source || '').trim(),
+    sourceUrl: String(form.sourceUrl || '').trim(),
     postedAt: form.postedAt || undefined,
     deadline: form.deadline || undefined,
-    notes: String(form.notes || '').trim() || undefined,
+    notes: String(form.notes || '').trim(),
   })
 }

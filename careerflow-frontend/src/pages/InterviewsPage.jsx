@@ -25,13 +25,15 @@ export default function InterviewsPage() {
 
   // Lightweight debounce (no library).
   useEffect(() => {
-    const timer = setTimeout(() => setSearch(searchInput), 350)
+    const timer = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(1)
+    }, 350)
     return () => clearTimeout(timer)
   }, [searchInput])
 
   const handleSearchChange = (event) => {
     setSearchInput(event.target.value)
-    setPage(1)
   }
 
   const handleStatusChange = (value) => {
@@ -74,7 +76,13 @@ export default function InterviewsPage() {
     setActionError(null)
     try {
       await deleteInterviewApi(interview._id)
-      setReloadKey((key) => key + 1)
+      // Deleting the last item on the last page would leave `page` past
+      // totalPages; step back one page instead of reloading the stale page.
+      if (interviews.length === 1 && page > 1) {
+        setPage(page - 1)
+      } else {
+        setReloadKey((key) => key + 1)
+      }
     } catch (err) {
       setActionError({ message: err.message })
     } finally {

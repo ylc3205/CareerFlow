@@ -121,6 +121,19 @@ const normalizePreparation = (raw) => {
   return parsed.data.questions
 }
 
+// Read-only lookup of an existing preparation. Returns null when the owned
+// interview has no preparation yet. Never triggers AI generation.
+const getPreparation = async (userId, interviewId) => {
+  validateObjectId(interviewId, 'Invalid interview ID')
+
+  const interview = await Interview.findOne({ _id: interviewId, user: userId })
+  if (!interview) {
+    throw new ApiError(404, 'Interview not found')
+  }
+
+  return InterviewPreparation.findOne({ user: userId, interview: interviewId })
+}
+
 const generatePreparation = async (userId, interviewId) => {
   validateObjectId(interviewId, 'Invalid interview ID')
 
@@ -180,4 +193,4 @@ const generatePreparation = async (userId, interviewId) => {
   return preparation
 }
 
-export { generatePreparation, normalizePreparation }
+export { getPreparation, generatePreparation, normalizePreparation }

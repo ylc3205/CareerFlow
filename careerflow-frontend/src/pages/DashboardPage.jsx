@@ -8,12 +8,17 @@ import EmptyState from '../components/EmptyState.jsx'
 import StatCard from '../components/analytics/StatCard.jsx'
 import ScoreBreakdown from '../components/analytics/ScoreBreakdown.jsx'
 import AreaList from '../components/analytics/AreaList.jsx'
+import TrendChart from '../components/analytics/TrendChart.jsx'
 import { getAnalyticsDashboardApi } from '../api/analytics.api.js'
+import { listJobsApi } from '../api/jobs.api.js'
+import { listApplicationsApi } from '../api/applications.api.js'
+import { listInterviewsApi } from '../api/interviews.api.js'
 import { formatDisplayDate } from '../utils/format.js'
 
 export default function DashboardPage() {
   const { user } = useAuth()
   const [dashboard, setDashboard] = useState(null)
+  const [overview, setOverview] = useState({ jobs: null, applications: null, interviews: null })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -24,9 +29,19 @@ export default function DashboardPage() {
       setLoading(true)
       setLoadError(null)
       try {
-        const res = await getAnalyticsDashboardApi()
+        const [dashRes, jobsRes, appsRes, intsRes] = await Promise.allSettled([
+          getAnalyticsDashboardApi(),
+          listJobsApi({ page: 1, limit: 1 }),
+          listApplicationsApi({ page: 1, limit: 1 }),
+          listInterviewsApi({ page: 1, limit: 1 }),
+        ])
         if (cancelled) return
-        setDashboard(res.data.dashboard)
+        setDashboard(dashRes.status === 'fulfilled' ? dashRes.value.data.dashboard : null)
+        setOverview({
+          jobs: jobsRes.status === 'fulfilled' ? jobsRes.value.data.pagination.total : null,
+          applications: appsRes.status === 'fulfilled' ? appsRes.value.data.pagination.total : null,
+          interviews: intsRes.status === 'fulfilled' ? intsRes.value.data.pagination.total : null,
+        })
       } catch (err) {
         if (!cancelled) setLoadError({ message: err.message })
       } finally {
@@ -60,7 +75,7 @@ export default function DashboardPage() {
     )
   }
 
-  const { totals, averages, bestSession, recentSessions, strongAreas, weakAreas } = dashboard
+  const { totals, averages, bestSession, recentSessions, trend, strongAreas, weakAreas } = dashboard
   const hasSessions = totals.totalSessions > 0
 
   return (
@@ -88,6 +103,15 @@ export default function DashboardPage() {
           value={`${totals.answeredQuestions}/${totals.totalQuestions}`}
           hint="across all sessions"
         />
+      </div>
+
+      <div className="dashboard__overview">
+        <h2 className="job-detail__section-title">Careers overview</h2>
+        <div className="stat-grid">
+          <StatCard label="Jobs saved" value={overview.jobs ?? '—'} />
+          <StatCard label="Applications" value={overview.applications ?? '—'} />
+          <StatCard label="Interviews" value={overview.interviews ?? '—'} />
+        </div>
       </div>
 
       {!hasSessions && (
@@ -144,6 +168,7 @@ export default function DashboardPage() {
       )}
 
       {hasSessions && (
+        <>
         <div className="analytics-grid">
           <Card>
             <h2 className="job-detail__section-title">Recent sessions</h2>
@@ -175,6 +200,12 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
+
+        <Card>
+          <h2 className="job-detail__section-title">Score trend</h2>
+          <TrendChart trend={trend} />
+        </Card>
+      </>
       )}
     </div>
   )

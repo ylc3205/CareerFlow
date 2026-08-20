@@ -28,6 +28,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const [match, setMatch] = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
@@ -58,7 +59,7 @@ export default function JobDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, reloadKey])
 
   // Best-effort: surface an existing cached match for THIS job only. Never triggers AI.
   useEffect(() => {
@@ -169,7 +170,17 @@ export default function JobDetailPage() {
   }
 
   if (loadError) {
-    return <ErrorMessage title="Could not load job" message={loadError.message} />
+    return (
+      <div className="page">
+        <PageHeader title="Job" subtitle="Could not load this job." />
+        <div className="page__error">
+          <ErrorMessage title="Could not load job" message={loadError.message} />
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!job) {
