@@ -1,0 +1,95 @@
+warning: in the working copy of 'careerflow-api/.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/controllers/interviewPreparation.controller.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/controllers/resume.controller.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/middlewares/error.middleware.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/models/resume.model.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/routes/interview.routes.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/routes/resume.routes.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/services/ai.service.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/services/interviewPreparation.service.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/services/job.service.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/services/resume.service.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/src/validators/resume.validator.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-ai-analyses.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-ai-analysis-delete.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-ai-analysis-summary.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-ai-analysis.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-analytics.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-application-filters.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-applications.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-interview-filters.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-interview-practice.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-interview-preparation.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-interviews.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-job-filters.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-jobs.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-match.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-profile.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-api/test/test-resume.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/api/interviews.api.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/components/interviews/PreparationSection.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/ApplicationDetailPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/ApplicationsPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/DashboardPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/InterviewDetailPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/InterviewsPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/JobDetailPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/JobFormPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/JobsPage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/pages/ResumePage.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/styles/index.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/utils/applicationForm.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/utils/format.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/utils/interviewForm.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'careerflow-frontend/src/utils/jobForm.js', LF will be replaced by CRLF the next time Git touches it
+ careerflow-api/.env.example                        |   8 [32m+[m
+ careerflow-api/package-lock.json                   | 547 [32m+++++++++++++++++++++[m
+ careerflow-api/package.json                        |   4 [32m+[m
+ .../controllers/interviewPreparation.controller.js |  14 [32m+[m[31m-[m
+ .../src/controllers/resume.controller.js           |  38 [32m+[m[31m-[m
+ careerflow-api/src/middlewares/error.middleware.js |  11 [32m+[m
+ careerflow-api/src/models/resume.model.js          |  52 [32m++[m
+ careerflow-api/src/routes/interview.routes.js      |   1 [32m+[m
+ careerflow-api/src/routes/resume.routes.js         |  10 [32m+[m[31m-[m
+ careerflow-api/src/services/ai.service.js          |  85 [32m+++[m[31m-[m
+ .../src/services/interviewPreparation.service.js   |  15 [32m+[m[31m-[m
+ careerflow-api/src/services/job.service.js         |  10 [32m+[m[31m-[m
+ careerflow-api/src/services/resume.service.js      |  81 [32m++[m[31m-[m
+ careerflow-api/src/validators/resume.validator.js  |  35 [32m++[m
+ careerflow-api/test/test-ai-analyses.js            |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-ai-analysis-delete.js     |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-ai-analysis-summary.js    |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-ai-analysis.js            |   3 [32m+[m[31m-[m
+ careerflow-api/test/test-analytics.js              |   3 [32m+[m[31m-[m
+ careerflow-api/test/test-application-filters.js    |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-applications.js           |   6 [32m+[m[31m-[m
+ careerflow-api/test/test-interview-filters.js      |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-interview-practice.js     |   3 [32m+[m[31m-[m
+ careerflow-api/test/test-interview-preparation.js  |  58 [32m++[m[31m-[m
+ careerflow-api/test/test-interviews.js             |   4 [32m+[m[31m-[m
+ careerflow-api/test/test-job-filters.js            |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-jobs.js                   |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-match.js                  |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-profile.js                |   2 [32m+[m[31m-[m
+ careerflow-api/test/test-resume.js                 |   2 [32m+[m[31m-[m
+ careerflow-frontend/package.json                   |   2 [32m+[m[31m-[m
+ careerflow-frontend/src/api/interviews.api.js      |   5 [32m+[m
+ .../components/interviews/PreparationSection.jsx   | 131 [32m+++[m[31m--[m
+ .../src/pages/ApplicationDetailPage.jsx            |  43 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/ApplicationsPage.jsx |  14 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/DashboardPage.jsx    |  37 [32m+[m[31m-[m
+ .../src/pages/InterviewDetailPage.jsx              |  12 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/InterviewsPage.jsx   |  14 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/JobDetailPage.jsx    |  15 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/JobFormPage.jsx      |  15 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/JobsPage.jsx         |  14 [32m+[m[31m-[m
+ careerflow-frontend/src/pages/ResumePage.jsx       |   9 [32m+[m[31m-[m
+ careerflow-frontend/src/styles/index.css           |   9 [32m+[m
+ careerflow-frontend/src/utils/applicationForm.js   |   6 [32m+[m[31m-[m
+ careerflow-frontend/src/utils/format.js            |  24 [32m+[m[31m-[m
+ careerflow-frontend/src/utils/interviewForm.js     |  13 [32m+[m[31m-[m
+ careerflow-frontend/src/utils/jobForm.js           |  19 [32m+[m[31m-[m
+ 47 files changed, 1277 insertions(+), 113 deletions(-)
