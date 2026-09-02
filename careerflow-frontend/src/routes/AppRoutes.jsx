@@ -9,6 +9,9 @@ import RegisterPage from '../pages/RegisterPage.jsx'
 import DashboardPage from '../pages/DashboardPage.jsx'
 import ProfilePage from '../pages/ProfilePage.jsx'
 import ResumePage from '../pages/ResumePage.jsx'
+import CareerDirectionsPage from '../pages/CareerDirectionsPage.jsx'
+import CareerDirectionFormPage from '../pages/CareerDirectionFormPage.jsx'
+import CareerDirectionDetailPage from '../pages/CareerDirectionDetailPage.jsx'
 import JobsPage from '../pages/JobsPage.jsx'
 import JobFormPage from '../pages/JobFormPage.jsx'
 import JobDetailPage from '../pages/JobDetailPage.jsx'
@@ -53,6 +56,10 @@ export default function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/resume" element={<ResumePage />} />
+        <Route path="/career-directions" element={<CareerDirectionsPage />} />
+        <Route path="/career-directions/new" element={<CareerDirectionFormPage />} />
+        <Route path="/career-directions/:id" element={<CareerDirectionDetailPage />} />
+        <Route path="/career-directions/:id/edit" element={<CareerDirectionFormPage />} />
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/jobs/new" element={<JobFormPage />} />
         <Route path="/jobs/:id" element={<JobDetailPage />} />
