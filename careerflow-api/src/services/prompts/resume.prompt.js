@@ -67,7 +67,6 @@ export const RESPONSE_SCHEMA = {
         yearsOfExperience: { type: 'number' },
       },
     },
-    careerDirections: { type: 'array', items: { type: 'string' } },
   },
   required: [
     'title',
@@ -79,7 +78,6 @@ export const RESPONSE_SCHEMA = {
     'projects',
     'certifications',
     'profile',
-    'careerDirections',
   ],
 }
 
@@ -132,13 +130,12 @@ const buildResumeParsePrompt = (cvText) => {
           },
         ],
         profile: {
-          fullName: 'the person\'s full name if stated, else empty string',
+          fullName: "the person's full name if stated, else empty string",
           phone: 'phone number if stated, else empty string',
           location: 'city/country if stated, else empty string',
           headline: 'a short role headline (e.g. "Fullstack Developer") if derivable, else empty string',
           yearsOfExperience: 'number of years of experience only if explicitly stated, else omit',
         },
-        careerDirections: '2-4 plausible career directions (job titles the person could target) derived ONLY from the CV experience and skills, e.g. ["Node.js Developer", "Backend Developer", "Fullstack Developer"]. Empty array if not derivable.',
       },
       null,
       2

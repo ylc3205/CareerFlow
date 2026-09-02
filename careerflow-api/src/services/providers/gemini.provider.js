@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai'
 
-const DEFAULT_MODEL = 'gemini-1.5-flash'
+const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 const generateStructuredText = async (prompt, schema) => {
   const apiKey = process.env.GEMINI_API_KEY

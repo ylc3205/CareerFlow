@@ -195,7 +195,6 @@ const normalizeResume = (raw) => {
     education: cleanList(data.education, cleanEducation),
     projects: cleanList(data.projects, cleanProject),
     certifications: cleanList(data.certifications, cleanCertification),
-    careerDirections: cleanArray(data.careerDirections, 200),
     profile: cleanProfile(data.profile),
   }
 }

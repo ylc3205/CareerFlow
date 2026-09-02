@@ -41,19 +41,11 @@ export const updateResumeSchema = z.object({
   projects: z.array(resumeProjectSchema).optional(),
   certifications: z.array(resumeCertificationSchema).optional(),
   languages: z.array(z.string().max(100)).optional(),
-  careerDirections: z
-    .array(
-      z.object({
-        title: z.string().max(200).optional(),
-        description: z.string().max(500).optional(),
-      })
-    )
-    .optional(),
 })
 
 // Zod schema the AI resume parsing output must satisfy before it is stored as
 // the user-reviewable draft. Mirrors updateResumeSchema plus the AI-only
-// `profile` suggestion and `careerDirections` suggestions.
+// `profile` suggestion.
 export const resumeParseSchema = z.object({
   title: z.string().max(200).optional(),
   summary: z.string().max(3000).optional(),
@@ -63,7 +55,6 @@ export const resumeParseSchema = z.object({
   education: z.array(resumeEducationSchema).optional(),
   projects: z.array(resumeProjectSchema).optional(),
   certifications: z.array(resumeCertificationSchema).optional(),
-  careerDirections: z.array(z.string().max(200)).optional(),
   profile: z
     .object({
       fullName: z.string().max(100).optional(),
