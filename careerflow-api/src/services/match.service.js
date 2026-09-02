@@ -2,14 +2,15 @@ import mongoose from 'mongoose'
 import Job from '../models/job.model.js'
 import Profile from '../models/profile.model.js'
 import Resume from '../models/resume.model.js'
+import CareerDirection from '../models/careerDirection.model.js'
 import AIAnalysis from '../models/aiAnalysis.model.js'
 import ApiError from '../utils/ApiError.js'
 import { buildJobMatchPrompt, RESPONSE_SCHEMA } from './prompts/match.prompt.js'
 import { generateStructuredJSON } from './ai.service.js'
 
-const validateObjectId = (id) => {
+const validateObjectId = (id, label = 'ID') => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new ApiError(400, 'Invalid job ID')
+    throw new ApiError(400, `Invalid ${label}`)
   }
 }
 
@@ -76,6 +77,27 @@ const buildCandidatePayload = (profile, resume) => ({
   experience: buildExperience(profile, resume),
 })
 
+const buildDirectionalCandidatePayload = (profile, resume, direction) => {
+  let fallbackSummary = undefined
+  if (resume && resume.summary) {
+    fallbackSummary = String(resume.summary)
+  } else if (profile && profile.bio) {
+    fallbackSummary = String(profile.bio)
+  } else if (profile && profile.headline) {
+    fallbackSummary = String(profile.headline)
+  }
+
+  return {
+    skills:
+      direction.focusSkills && direction.focusSkills.length > 0
+        ? direction.focusSkills
+        : mergeSkills(profile, resume),
+    summary: direction.description ? String(direction.description) : fallbackSummary,
+    experience: buildExperience(profile, resume),
+    targetRoles: direction.targetRoles && direction.targetRoles.length > 0 ? direction.targetRoles : undefined,
+  }
+}
+
 const normalizeScore = (value) => {
   const num = Number(value)
   if (!Number.isFinite(num)) return 0
@@ -110,17 +132,12 @@ const toMatchShape = (analysis) => ({
   recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
 })
 
-const generateMatch = async (userId, jobId) => {
-  validateObjectId(jobId)
+const generateMatch = async (userId, jobId, careerDirectionId = null) => {
+  validateObjectId(jobId, 'job ID')
 
   const job = await Job.findOne({ _id: jobId, user: userId })
   if (!job) {
     throw new ApiError(404, 'Job not found')
-  }
-
-  const existing = await AIAnalysis.findOne({ user: userId, job: jobId })
-  if (existing) {
-    return toMatchShape(existing)
   }
 
   const [profile, resume] = await Promise.all([
@@ -128,25 +145,76 @@ const generateMatch = async (userId, jobId) => {
     Resume.findOne({ user: userId }),
   ])
 
-  if (!profile && !resume) {
-    throw new ApiError(400, 'Please create a profile or resume to use AI matching')
+  let candidatePayload
+  let usedDirectionId = null
+  let usedDirectionTitle = null
+  let candidateSourceType = 'general'
+
+  if (careerDirectionId) {
+    validateObjectId(careerDirectionId, 'career direction ID')
+
+    const direction = await CareerDirection.findOne({ _id: careerDirectionId, user: userId })
+    if (!direction) {
+      throw new ApiError(404, 'Career direction not found')
+    }
+
+    usedDirectionId = direction._id
+    usedDirectionTitle = direction.title
+    candidateSourceType = direction.baseType
+
+    const profileSource = direction.baseType === 'profile' ? profile : null
+    const resumeSource = direction.baseType === 'resume' ? resume : null
+
+    if (direction.baseType === 'profile' && !profileSource) {
+      throw new ApiError(400, 'Profile not found for profile-based career direction')
+    }
+
+    if (direction.baseType === 'resume' && !resumeSource) {
+      throw new ApiError(400, 'Resume not found for resume-based career direction')
+    }
+
+    if (direction.baseType !== 'profile' && direction.baseType !== 'resume') {
+      throw new ApiError(400, 'Invalid career direction base type')
+    }
+
+    candidatePayload = buildDirectionalCandidatePayload(profileSource, resumeSource, direction)
+  } else {
+    if (!resume) {
+      throw new ApiError(400, 'Resume not found for General / Base Resume')
+    }
+    candidatePayload = buildCandidatePayload(null, resume)
   }
 
   const jobPayload = buildJobPayload(job)
-  const candidatePayload = buildCandidatePayload(profile, resume)
-
   const prompt = buildJobMatchPrompt(jobPayload, candidatePayload)
   const rawResult = await generateStructuredJSON(prompt, RESPONSE_SCHEMA)
 
   const match = normalizeMatch(rawResult)
-  const analysis = new AIAnalysis({ user: userId, job: jobId, ...match })
-  try {
-    await analysis.save()
-  } catch {
+
+  const update = {
+    ...match,
+    careerDirectionId: usedDirectionId,
+    careerDirectionTitle: usedDirectionTitle,
+    candidateSourceType,
+    updatedAt: new Date(),
+  }
+
+  const analysis = await AIAnalysis.findOneAndUpdate(
+    { user: userId, job: jobId },
+    { $set: update },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )
+
+  if (!analysis) {
     throw new ApiError(500, 'Failed to save AI analysis')
   }
 
-  return match
+  return {
+    ...match,
+    careerDirectionId: usedDirectionId,
+    careerDirectionTitle: usedDirectionTitle,
+    candidateSourceType,
+  }
 }
 
 export { generateMatch }

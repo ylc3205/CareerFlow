@@ -27,6 +27,9 @@ const aiAnalysisSchema = new mongoose.Schema(
     recommendations: { type: [String], default: [] },
     model: { type: String, default: null },
     provider: { type: String, default: null },
+    careerDirectionId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    careerDirectionTitle: { type: String, default: null },
+    candidateSourceType: { type: String, enum: ['general', 'profile', 'resume'], default: null },
   },
   { timestamps: true }
 )
