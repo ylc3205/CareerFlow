@@ -55,28 +55,39 @@ const resumeOriginalFileSchema = new mongoose.Schema(
   { _id: false }
 )
 
-const resumeCareerDirectionSchema = new mongoose.Schema(
-  {
-    title: { type: String, trim: true },
-    description: { type: String, trim: true },
-  },
-  { _id: true }
-)
-
 // AI-parsed proposal that has NOT been confirmed by the user yet.
+//
 // Mirrors the main fields so the user can review/edit the draft and only
 // confirmed values are written to the main Resume fields.
 const resumeDraftSchema = new mongoose.Schema(
   {
     title: { type: String, trim: true },
     summary: { type: String, trim: true },
+
     skills: { type: [String], default: [] },
+
     languages: { type: [String], default: [] },
-    experience: { type: [resumeExperienceSchema], default: [] },
-    education: { type: [resumeEducationSchema], default: [] },
-    projects: { type: [resumeProjectSchema], default: [] },
-    certifications: { type: [resumeCertificationSchema], default: [] },
-    careerDirections: { type: [String], default: [] },
+
+    experience: {
+      type: [resumeExperienceSchema],
+      default: [],
+    },
+
+    education: {
+      type: [resumeEducationSchema],
+      default: [],
+    },
+
+    projects: {
+      type: [resumeProjectSchema],
+      default: [],
+    },
+
+    certifications: {
+      type: [resumeCertificationSchema],
+      default: [],
+    },
+
     profile: {
       fullName: { type: String, trim: true },
       phone: { type: String, trim: true },
@@ -96,24 +107,67 @@ const resumeSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    title: { type: String, trim: true },
-    summary: { type: String, trim: true },
-    skills: { type: [String], default: [] },
-    experience: { type: [resumeExperienceSchema], default: [] },
-    education: { type: [resumeEducationSchema], default: [] },
-    projects: { type: [resumeProjectSchema], default: [] },
-    certifications: { type: [resumeCertificationSchema], default: [] },
-    languages: { type: [String], default: [] },
-    originalFile: { type: resumeOriginalFileSchema, default: null },
-    draft: { type: resumeDraftSchema, default: null },
+
+    title: {
+      type: String,
+      trim: true,
+    },
+
+    summary: {
+      type: String,
+      trim: true,
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    experience: {
+      type: [resumeExperienceSchema],
+      default: [],
+    },
+
+    education: {
+      type: [resumeEducationSchema],
+      default: [],
+    },
+
+    projects: {
+      type: [resumeProjectSchema],
+      default: [],
+    },
+
+    certifications: {
+      type: [resumeCertificationSchema],
+      default: [],
+    },
+
+    languages: {
+      type: [String],
+      default: [],
+    },
+
+    originalFile: {
+      type: resumeOriginalFileSchema,
+      default: null,
+    },
+
+    draft: {
+      type: resumeDraftSchema,
+      default: null,
+    },
+
     importStatus: {
       type: String,
       enum: ['none', 'draft', 'confirmed'],
       default: 'none',
     },
-    careerDirections: { type: [resumeCareerDirectionSchema], default: [] },
+
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 )
 
 const Resume = mongoose.model('Resume', resumeSchema)

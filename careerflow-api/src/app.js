@@ -5,6 +5,7 @@ import healthRoutes from './routes/health.routes.js'
 import authRoutes from './routes/auth.routes.js'
 import profileRoutes from './routes/profile.routes.js'
 import resumeRoutes from './routes/resume.routes.js'
+import careerDirectionRoutes from './routes/careerDirection.routes.js'
 import jobRoutes from './routes/job.routes.js'
 import applicationRoutes from './routes/application.routes.js'
 import interviewRoutes from './routes/interview.routes.js'
@@ -23,6 +24,7 @@ app.use('/api', healthRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/resume', resumeRoutes)
+app.use('/api/career-directions', careerDirectionRoutes)
 app.use('/api/jobs', jobRoutes)
 app.use('/api/jobs/:id/match', matchRoutes)
 app.use('/api/applications', applicationRoutes)

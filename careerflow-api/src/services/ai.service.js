@@ -125,7 +125,6 @@ const generateMockResumeParse = () => ({
     headline: 'Backend Developer',
     yearsOfExperience: 3,
   },
-  careerDirections: ['Backend Developer', 'Node.js Developer', 'Fullstack Developer'],
 })
 
 const parseJson = (text) => {
@@ -155,7 +154,14 @@ const generateStructuredJSON = async (prompt, schema) => {
   try {
     const text = await provider(prompt, schema)
     return parseJson(text)
-  } catch {
+  } catch (error) {
+    console.error('AI provider failed:', {
+      provider: providerName,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      status: error?.status || error?.response?.status,
+      message: error?.message,
+      code: error?.code || error?.response?.statusText
+    })
     throw new ApiError(503, 'AI Service Unavailable')
   }
 }
@@ -174,7 +180,14 @@ const generateInterviewPreparationJSON = async (prompt, schema) => {
   try {
     const text = await provider(prompt, schema)
     return parseJson(text)
-  } catch {
+  } catch (error) {
+    console.error('AI provider failed:', {
+      provider: providerName,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      status: error?.status || error?.response?.status,
+      message: error?.message,
+      code: error?.code || error?.response?.statusText
+    })
     throw new ApiError(503, 'AI Service Unavailable')
   }
 }
@@ -194,7 +207,14 @@ const generateAnswerEvaluationJSON = async (prompt, schema) => {
   try {
     const text = await provider(prompt, schema)
     return parseJson(text)
-  } catch {
+  } catch (error) {
+    console.error('AI provider failed:', {
+      provider: providerName,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      status: error?.status || error?.response?.status,
+      message: error?.message,
+      code: error?.code || error?.response?.statusText
+    })
     throw new ApiError(503, 'AI Service Unavailable')
   }
 }
@@ -213,7 +233,14 @@ const generateResumeParseJSON = async (prompt, schema) => {
   try {
     const text = await provider(prompt, schema)
     return parseJson(text)
-  } catch {
+  } catch (error) {
+    console.error('AI provider failed:', {
+      provider: providerName,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      status: error?.status || error?.response?.status,
+      message: error?.message,
+      code: error?.code || error?.response?.statusText
+    })
     throw new ApiError(503, 'AI Service Unavailable')
   }
 }
