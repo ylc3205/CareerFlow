@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import ErrorMessage from '../ErrorMessage.jsx'
+import { Button } from '../ui/button.jsx'
+import { Input } from '../ui/input.jsx'
+import { Label } from '../ui/label.jsx'
+import { Textarea } from '../ui/textarea.jsx'
 import { buildJobPayload } from '../../utils/jobForm.js'
 import { validateJob } from '../../utils/validators.js'
 
@@ -7,6 +11,15 @@ const EMPLOYMENT_TYPES = ['full-time', 'part-time', 'internship', 'contract', 'f
 const WORKPLACE_TYPES = ['remote', 'hybrid', 'onsite']
 const JOB_STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected', 'closed']
 const SALARY_PERIODS = ['hourly', 'monthly', 'yearly']
+
+const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+const textareaClass = `${inputClass} min-h-[80px] resize-y`
+const selectClass = inputClass
+const fieldClass = "space-y-1.5"
+const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
+const sectionClass = "border-t border-border pt-6"
+const sectionTitleClass = "text-lg font-semibold tracking-tight"
+const errorClass = "text-sm text-destructive"
 
 export default function JobForm({ initialValues, submitLabel = 'Save job', onSubmit, submitting, apiError }) {
   const [form, setForm] = useState(initialValues)
@@ -31,64 +44,56 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
   }
 
   return (
-    <form className="form form--card" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       {apiError && <ErrorMessage title="Could not save job" message={apiError.message} errors={apiError.errors} />}
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="title">
-            Title *
-          </label>
-          <input
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="title">Title *</Label>
+          <Input
             id="title"
             name="title"
-            className="form__input"
+            className={inputClass}
             placeholder="e.g. Senior Frontend Engineer"
             maxLength={300}
             value={form.title}
             onChange={updateField}
             aria-invalid={Boolean(fieldErrors.title)}
           />
-          {fieldErrors.title && <p className="form__error">{fieldErrors.title}</p>}
+          {fieldErrors.title && <p className={errorClass}>{fieldErrors.title}</p>}
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="company">
-            Company *
-          </label>
-          <input
+        <div className={fieldClass}>
+          <Label htmlFor="company">Company *</Label>
+          <Input
             id="company"
             name="company"
-            className="form__input"
+            className={inputClass}
             placeholder="e.g. Acme Inc."
             maxLength={200}
             value={form.company}
             onChange={updateField}
             aria-invalid={Boolean(fieldErrors.company)}
           />
-          {fieldErrors.company && <p className="form__error">{fieldErrors.company}</p>}
+          {fieldErrors.company && <p className={errorClass}>{fieldErrors.company}</p>}
         </div>
       </div>
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="location">
-            Location
-          </label>
-          <input
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="location">Location</Label>
+          <Input
             id="location"
             name="location"
-            className="form__input"
+            className={inputClass}
             placeholder="City, Country"
             maxLength={200}
             value={form.location}
             onChange={updateField}
           />
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="status">
-            Status
-          </label>
-          <select id="status" name="status" className="form__input" value={form.status} onChange={updateField}>
+        <div className={fieldClass}>
+          <Label htmlFor="status">Status</Label>
+          <select id="status" name="status" className={selectClass} value={form.status} onChange={updateField}>
             {JOB_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -98,15 +103,13 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         </div>
       </div>
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="employmentType">
-            Employment type
-          </label>
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="employmentType">Employment type</Label>
           <select
             id="employmentType"
             name="employmentType"
-            className="form__input"
+            className={selectClass}
             value={form.employmentType}
             onChange={updateField}
           >
@@ -118,14 +121,12 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
             ))}
           </select>
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="workplaceType">
-            Workplace type
-          </label>
+        <div className={fieldClass}>
+          <Label htmlFor="workplaceType">Workplace type</Label>
           <select
             id="workplaceType"
             name="workplaceType"
-            className="form__input"
+            className={selectClass}
             value={form.workplaceType}
             onChange={updateField}
           >
@@ -139,14 +140,12 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         </div>
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="description">
-          Description
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
           id="description"
           name="description"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={5}
           maxLength={10000}
           placeholder="Paste the job description"
@@ -155,14 +154,12 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         />
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="requirements">
-          Requirements
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="requirements">Requirements</Label>
+        <Textarea
           id="requirements"
           name="requirements"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={4}
           maxLength={5000}
           value={form.requirements}
@@ -170,14 +167,12 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         />
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="responsibilities">
-          Responsibilities
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="responsibilities">Responsibilities</Label>
+        <Textarea
           id="responsibilities"
           name="responsibilities"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={4}
           maxLength={5000}
           value={form.responsibilities}
@@ -185,71 +180,61 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         />
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="skills">
-          Skills
-        </label>
-        <input
+      <div className={fieldClass}>
+        <Label htmlFor="skills">Skills</Label>
+        <Input
           id="skills"
           name="skills"
-          className="form__input"
+          className={inputClass}
           placeholder="JavaScript, React, Node.js"
           value={form.skills}
           onChange={updateField}
         />
       </div>
 
-      <section className="form__section">
-        <h2 className="form__section-title">Salary</h2>
-        <div className="form__row">
-          <div className="form__field">
-            <label className="form__label" htmlFor="salaryMin">
-              Minimum
-            </label>
-            <input
+      <section className={sectionClass}>
+        <h2 className={sectionTitleClass}>Salary</h2>
+        <div className={rowClass}>
+          <div className={fieldClass}>
+            <Label htmlFor="salaryMin">Minimum</Label>
+            <Input
               id="salaryMin"
               name="salaryMin"
               type="number"
               min="0"
-              className="form__input"
+              className={inputClass}
               value={form.salaryMin}
               onChange={updateField}
             />
           </div>
-          <div className="form__field">
-            <label className="form__label" htmlFor="salaryMax">
-              Maximum
-            </label>
-            <input
+          <div className={fieldClass}>
+            <Label htmlFor="salaryMax">Maximum</Label>
+            <Input
               id="salaryMax"
               name="salaryMax"
               type="number"
               min="0"
-              className="form__input"
+              className={inputClass}
               value={form.salaryMax}
               onChange={updateField}
             />
           </div>
         </div>
-        <div className="form__row">
-          <div className="form__field">
-            <label className="form__label" htmlFor="salaryCurrency">
-              Currency
-            </label>
-            <input
+        <div className={rowClass}>
+          <div className={fieldClass}>
+            <Label htmlFor="salaryCurrency">Currency</Label>
+            <Input
               id="salaryCurrency"
               name="salaryCurrency"
-              className="form__input"
+              className={inputClass}
               maxLength={10}
               value={form.salaryCurrency}
               onChange={updateField}
             />
           </div>
-          <div className="form__field">
-            <label className="form__label" htmlFor="salaryPeriod">
-              Period
-            </label>
-            <select id="salaryPeriod" name="salaryPeriod" className="form__input" value={form.salaryPeriod} onChange={updateField}>
+          <div className={fieldClass}>
+            <Label htmlFor="salaryPeriod">Period</Label>
+            <select id="salaryPeriod" name="salaryPeriod" className={selectClass} value={form.salaryPeriod} onChange={updateField}>
               <option value="">Not specified</option>
               {SALARY_PERIODS.map((item) => (
                 <option key={item} value={item}>
@@ -261,61 +246,51 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         </div>
       </section>
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="postedAt">
-            Posted date
-          </label>
-          <input id="postedAt" name="postedAt" type="date" className="form__input" value={form.postedAt} onChange={updateField} />
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="postedAt">Posted date</Label>
+          <Input id="postedAt" name="postedAt" type="date" className={inputClass} value={form.postedAt} onChange={updateField} />
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="deadline">
-            Deadline
-          </label>
-          <input id="deadline" name="deadline" type="date" className="form__input" value={form.deadline} onChange={updateField} />
+        <div className={fieldClass}>
+          <Label htmlFor="deadline">Deadline</Label>
+          <Input id="deadline" name="deadline" type="date" className={inputClass} value={form.deadline} onChange={updateField} />
         </div>
       </div>
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="source">
-            Source
-          </label>
-          <input
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="source">Source</Label>
+          <Input
             id="source"
             name="source"
-            className="form__input"
+            className={inputClass}
             placeholder="e.g. LinkedIn, Company website"
             maxLength={200}
             value={form.source}
             onChange={updateField}
           />
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="sourceUrl">
-            Source URL
-          </label>
-          <input
+        <div className={fieldClass}>
+          <Label htmlFor="sourceUrl">Source URL</Label>
+          <Input
             id="sourceUrl"
             name="sourceUrl"
-            className="form__input"
+            className={inputClass}
             placeholder="https://..."
             value={form.sourceUrl}
             onChange={updateField}
             aria-invalid={Boolean(fieldErrors.sourceUrl)}
           />
-          {fieldErrors.sourceUrl && <p className="form__error">{fieldErrors.sourceUrl}</p>}
+          {fieldErrors.sourceUrl && <p className={errorClass}>{fieldErrors.sourceUrl}</p>}
         </div>
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="notes">
-          Notes
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
           id="notes"
           name="notes"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={3}
           maxLength={2000}
           value={form.notes}
@@ -323,10 +298,10 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         />
       </div>
 
-      <div className="form__actions">
-        <button type="submit" className="btn btn--primary" disabled={submitting}>
+      <div className="flex items-center gap-3 border-t border-border pt-6">
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Saving...' : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   )

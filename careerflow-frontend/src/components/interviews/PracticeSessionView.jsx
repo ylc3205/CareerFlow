@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import Badge from '../Badge.jsx'
-import Card from '../Card.jsx'
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card.jsx'
+import { Badge } from '../ui/badge.jsx'
+import { Button } from '../ui/button.jsx'
+import { Label } from '../ui/label.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import AnswerEvaluation from './AnswerEvaluation.jsx'
 import SessionSummary from './SessionSummary.jsx'
@@ -75,16 +77,16 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
   }
 
   return (
-    <div className="practice-view">
-      <div className="practice-view__header">
-        <button type="button" className="btn btn--ghost btn--sm" onClick={onBack}>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <Button variant="ghost" size="sm" onClick={onBack}>
           ← All sessions
-        </button>
-        <div className="practice-view__progress">
+        </Button>
+        <div className="flex items-center gap-2">
           <Badge variant={PRACTICE_STATUS_VARIANT[session.status] || 'default'}>
             {PRACTICE_STATUS_LABEL[session.status] || session.status}
           </Badge>
-          <span>
+          <span className="text-sm text-muted-foreground">
             {answeredCount}/{answers.length} answered
           </span>
         </div>
@@ -92,39 +94,49 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
 
       {completed && session.summary && (
         <Card>
-          <h2 className="job-detail__section-title">Session summary</h2>
-          <SessionSummary summary={session.summary} />
+          <CardHeader>
+            <CardTitle>Session summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SessionSummary summary={session.summary} />
+          </CardContent>
         </Card>
       )}
 
       <Card>
-        <h2 className="job-detail__section-title">Questions</h2>
-        <ol className="practice-nav">
-          {answers.map((slot, index) => {
-            const isActive = index === activeIndex
-            const evaluated = Boolean(slot && slot.evaluation)
-            return (
-              <li key={slot.questionIndex}>
-                <button
-                  type="button"
-                  className={`practice-nav__item${isActive ? ' practice-nav__item--active' : ''}${evaluated ? ' practice-nav__item--done' : ''}`}
-                  onClick={() => setActiveIndex(index)}
-                >
-                  <span className="practice-nav__number">{index + 1}</span>
-                  <span className="practice-nav__title">{slot.question}</span>
-                  <span className="practice-nav__state">
-                    {evaluated ? `Score ${slot.evaluation.score}` : 'Pending'}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ol>
+        <CardHeader>
+          <CardTitle>Questions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-2">
+            {answers.map((slot, index) => {
+              const isActive = index === activeIndex
+              const evaluated = Boolean(slot && slot.evaluation)
+              return (
+                <li key={slot.questionIndex}>
+                  <button
+                    type="button"
+                    className={`w-full text-left flex items-center gap-3 p-3 rounded-sm border border-border bg-background transition-colors ${
+                      isActive ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-muted'
+                    }${evaluated ? ' border-success' : ''}`}
+                    onClick={() => setActiveIndex(index)}
+                  >
+                    <span className="font-mono tabular-nums text-sm">{index + 1}</span>
+                    <span className="flex-1 truncate">{slot.question}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {evaluated ? `Score ${slot.evaluation.score}` : 'Pending'}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </CardContent>
       </Card>
 
       <Card>
-        <div className="practice-question">
-          <div className="practice-question__meta">
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={PRACTICE_CATEGORY_VARIANT[activeSlot.category] || 'default'}>
               {PRACTICE_CATEGORY_LABEL[activeSlot.category] || activeSlot.category}
             </Badge>
@@ -132,27 +144,25 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
               {PRACTICE_DIFFICULTY_LABEL[activeSlot.difficulty] || activeSlot.difficulty}
             </Badge>
             {activeSlot.attemptCount > 0 && (
-              <span className="practice-question__attempts">
-                Attempt {activeSlot.attemptCount}
-              </span>
+              <span className="text-xs text-muted-foreground">Attempt {activeSlot.attemptCount}</span>
             )}
           </div>
-          <h3 className="practice-question__text">{activeSlot.question}</h3>
+          <h3 className="text-lg font-semibold">{activeSlot.question}</h3>
 
           {activeSlot.evaluation && (
-            <div className="practice-question__evaluation">
+            <div className="border-t border-border pt-4">
               <AnswerEvaluation evaluation={activeSlot.evaluation} />
             </div>
           )}
 
-          {!completed && (
-            <div className="practice-question__answer">
-              <label className="form__label" htmlFor={`answer-${session._id}-${activeIndex}`}>
-                {activeSlot.evaluation ? 'Revise your answer' : 'Your answer'}
-              </label>
-              <textarea
+{!completed && (
+              <div className="space-y-4">
+                <Label className="block text-sm font-medium">
+                  {activeSlot.evaluation ? 'Revise your answer' : 'Your answer'}
+                </Label>
+                <textarea
                 id={`answer-${session._id}-${activeIndex}`}
-                className="form__input form__textarea"
+                className="flex h-32 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 rows={6}
                 maxLength={4000}
                 value={draft}
@@ -162,30 +172,30 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
               {submitError && (
                 <ErrorMessage title="Could not submit your answer" message={submitError.message} errors={submitError.errors} />
               )}
-              <div className="practice-question__actions">
-                <button type="button" className="btn btn--primary" disabled={submitting} onClick={handleSubmit}>
-                  {submitting ? 'Evaluating…' : activeSlot.evaluation ? 'Save revision' : 'Submit answer'}
-                </button>
-              </div>
+              <Button disabled={submitting} onClick={handleSubmit}>
+                {submitting ? 'Evaluating…' : activeSlot.evaluation ? 'Save revision' : 'Submit answer'}
+              </Button>
             </div>
           )}
-        </div>
+        </CardContent>
       </Card>
 
       {!completed && answeredCount > 0 && (
-        <Card className="practice-view__finish">
-          <div className="practice-view__finish-text">
-            <h3 className="practice-view__finish-title">Finish now</h3>
-            <p className="practice-view__finish-subtitle">
-              Summarize your {answeredCount} evaluated answer{answeredCount === 1 ? '' : 's'} without answering the rest.
-            </p>
-          </div>
-          <div className="practice-view__finish-actions">
-            {completeError && <ErrorMessage title="Could not complete the session" message={completeError.message} />}
-            <button type="button" className="btn btn--ghost" disabled={completing} onClick={handleComplete}>
-              {completing ? 'Completing…' : 'Complete session'}
-            </button>
-          </div>
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-medium">Finish now</h3>
+              <p className="text-sm text-muted-foreground">
+                Summarize your {answeredCount} evaluated answer{answeredCount === 1 ? '' : 's'} without answering the rest.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {completeError && <ErrorMessage title="Could not complete the session" message={completeError.message} />}
+              <Button variant="ghost" disabled={completing} onClick={handleComplete}>
+                {completing ? 'Completing…' : 'Complete session'}
+              </Button>
+            </div>
+          </CardContent>
         </Card>
       )}
     </div>

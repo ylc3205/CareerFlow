@@ -4,6 +4,10 @@ import { useAuth } from '../auth/useAuth.js'
 import { validateLogin } from '../utils/validators.js'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import PasswordField from '../components/PasswordField.jsx'
+import { Button } from '../components/ui/button.jsx'
+import { Input } from '../components/ui/input.jsx'
+import { Label } from '../components/ui/label.jsx'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card.jsx'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -44,56 +48,62 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+  const fieldClass = "space-y-1.5"
+  const errorClass = "text-sm text-destructive"
+
   return (
-    <div className="auth-page">
-      <h1 className="auth-page__title">Welcome back</h1>
-      <p className="auth-page__subtitle">Sign in to continue to your job tracker.</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>Sign in to continue to your job tracker.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {apiError && <ErrorMessage message={apiError.message} errors={apiError.errors} />}
 
-      {apiError && <ErrorMessage message={apiError.message} errors={apiError.errors} />}
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div className={fieldClass}>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                className={inputClass}
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email && <p className={errorClass}>{fieldErrors.email}</p>}
+            </div>
 
-      <form className="form" onSubmit={handleSubmit} noValidate>
-        <div className="form__field">
-          <label className="form__label" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            className="form__input"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={handleChange}
-            aria-invalid={Boolean(fieldErrors.email)}
-          />
-          {fieldErrors.email && <p className="form__error">{fieldErrors.email}</p>}
-        </div>
+            <div className={fieldClass}>
+              <Label htmlFor="password">Password</Label>
+              <PasswordField
+                id="password"
+                name="password"
+                autoComplete="current-password"
+                placeholder="Your password"
+                value={form.password}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.password)}
+              />
+              {fieldErrors.password && <p className={errorClass}>{fieldErrors.password}</p>}
+            </div>
 
-        <div className="form__field">
-          <label className="form__label" htmlFor="password">
-            Password
-          </label>
-          <PasswordField
-            id="password"
-            name="password"
-            autoComplete="current-password"
-            placeholder="Your password"
-            value={form.password}
-            onChange={handleChange}
-            aria-invalid={Boolean(fieldErrors.password)}
-          />
-          {fieldErrors.password && <p className="form__error">{fieldErrors.password}</p>}
-        </div>
-
-        <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
-          {submitting ? 'Signing in...' : 'Sign in'}
-        </button>
-      </form>
-
-      <p className="auth-page__footer">
-        Don't have an account? <Link to="/register">Create one</Link>
-      </p>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Don't have an account? <Link to="/register" className="underline hover:no-underline">Create one</Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

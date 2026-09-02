@@ -6,6 +6,7 @@ import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
 import InterviewCard from '../components/interviews/InterviewCard.jsx'
+import { Button } from '../components/ui/button.jsx'
 import { listInterviewsApi, deleteInterviewApi } from '../api/interviews.api.js'
 import { INTERVIEW_STATUSES } from '../utils/constants.js'
 
@@ -93,20 +94,20 @@ export default function InterviewsPage() {
   const hasFilters = Boolean(search || status)
 
   return (
-    <div className="page">
+    <div className="space-y-6">
       <PageHeader title="Interviews" subtitle="Keep track of your upcoming and past interviews." />
 
-      <div className="job-filters">
+      <div className="flex gap-3 mb-6">
         <input
           type="search"
-          className="form__input"
+          className="flex h-9 w-full flex-1 rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           placeholder="Search by job title or company..."
           aria-label="Search interviews"
           value={searchInput}
           onChange={handleSearchChange}
         />
         <select
-          className="form__input"
+          className="flex h-9 w-[200px] rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           aria-label="Filter by status"
           value={status}
           onChange={(event) => handleStatusChange(event.target.value)}
@@ -125,11 +126,11 @@ export default function InterviewsPage() {
       {loading && <Loading label="Loading interviews..." />}
 
       {!loading && loadError && (
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load interviews" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -139,9 +140,9 @@ export default function InterviewsPage() {
             title="No matching interviews"
             description="Try adjusting your search or filters."
             action={
-              <button type="button" className="btn btn--ghost" onClick={clearFilters}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
-              </button>
+              </Button>
             }
           />
         ) : (
@@ -149,16 +150,16 @@ export default function InterviewsPage() {
             title="No interviews yet"
             description="Add an interview from an application detail page to keep track of it."
             action={
-              <Link to="/applications" className="btn btn--primary">
-                Go to applications
-              </Link>
+              <Button asChild>
+                <Link to="/applications">Go to applications</Link>
+              </Button>
             }
           />
         )
       )}
 
       {!loading && !loadError && interviews.length > 0 && (
-        <div className="interview-list">
+        <div className="space-y-4">
           {interviews.map((interview) => (
             <InterviewCard
               key={interview._id}

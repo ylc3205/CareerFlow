@@ -16,7 +16,7 @@ import {
   Video,
 } from 'lucide-react'
 import { useAuth } from '../auth/useAuth.js'
-import { getAnalyticsDashboardApi } from '../api/analytics.api.js'
+import { getAnalyticsDashboardApi, getApplicationPipelineApi } from '../api/analytics.api.js'
 import { listJobsApi } from '../api/jobs.api.js'
 import { listApplicationsApi } from '../api/applications.api.js'
 import { listInterviewsApi } from '../api/interviews.api.js'
@@ -44,7 +44,7 @@ const TYPE_ICON = {
 
 function DashboardSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8 md:py-10">
+    <div className="space-y-6">
       <div className="space-y-3">
         <div className="h-3 w-16 animate-pulse rounded-sm bg-muted" />
         <div className="h-8 w-72 animate-pulse rounded-sm bg-muted" />
@@ -64,7 +64,6 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [dashboard, setDashboard] = useState(null)
   const [overview, setOverview] = useState({ jobs: null, applications: null, interviews: null, offers: null })
-  const [applications, setApplications] = useState([])
   const [counts, setCounts] = useState({ applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 })
   const [nextInterview, setNextInterview] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -77,21 +76,18 @@ export default function DashboardPage() {
       setLoading(true)
       setLoadError(null)
       try {
-        const [dashRes, jobsRes, appsRes, intsRes, schedRes, offerRes] = await Promise.allSettled([
+        const [dashRes, jobsRes, pipelineRes, intsRes, schedRes, offerRes] = await Promise.allSettled([
           getAnalyticsDashboardApi(),
           listJobsApi({ page: 1, limit: 1 }),
-          listApplicationsApi({ page: 1, limit: 200 }),
+          getApplicationPipelineApi(),
           listInterviewsApi({ page: 1, limit: 1 }),
           listInterviewsApi({ status: 'scheduled', page: 1, limit: 50 }),
           listApplicationsApi({ status: 'offer', page: 1, limit: 1 }),
         ])
         if (cancelled) return
 
-        const apps = appsRes.status === 'fulfilled' ? appsRes.value.data.applications : []
-        const next = { applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 }
-        for (const app of apps) {
-          if (app.status in next) next[app.status] += 1
-        }
+        const pipeline = pipelineRes.status === 'fulfilled' ? pipelineRes.value.data.pipeline : null
+        const next = pipeline ? pipeline.byStatus : { applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 }
 
         const scheduled = schedRes.status === 'fulfilled' ? schedRes.value.data.interviews : []
         const now = Date.now()
@@ -102,11 +98,10 @@ export default function DashboardPage() {
         setDashboard(dashRes.status === 'fulfilled' ? dashRes.value.data.dashboard : null)
         setOverview({
           jobs: jobsRes.status === 'fulfilled' ? jobsRes.value.data.pagination.total : null,
-          applications: appsRes.status === 'fulfilled' ? appsRes.value.data.pagination.total : null,
+          applications: pipeline ? pipeline.totalApplications : null,
           interviews: intsRes.status === 'fulfilled' ? intsRes.value.data.pagination.total : null,
           offers: offerRes.status === 'fulfilled' ? offerRes.value.data.pagination.total : null,
         })
-        setApplications(apps)
         setCounts(next)
         setNextInterview(upcoming[0] || null)
       } catch (err) {
@@ -127,20 +122,18 @@ export default function DashboardPage() {
 
   if (loadError || !dashboard) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8 md:py-10">
-        <Card>
-          <CardContent className="flex flex-col items-start gap-3 p-8">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <div>
-              <p className="text-sm font-medium">Could not load your dashboard</p>
-              <p className="mt-1 text-sm text-muted-foreground">{loadError?.message || 'No data returned.'}</p>
-            </div>
-            <Button size="sm" onClick={() => setReloadKey((key) => key + 1)}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-start gap-3 p-8">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <div>
+            <p className="text-sm font-medium">Could not load your dashboard</p>
+            <p className="mt-1 text-sm text-muted-foreground">{loadError?.message || 'No data returned.'}</p>
+          </div>
+          <Button size="sm" onClick={() => setReloadKey((key) => key + 1)}>
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -149,7 +142,7 @@ export default function DashboardPage() {
 
   const activeStages = APPLICATION_PROGRESS.filter((stage) => counts[stage] > 0)
   const currentKey = activeStages.length ? activeStages[activeStages.length - 1] : null
-  const hasApplications = applications.length > 0
+  const hasApplications = Object.values(counts).some((count) => count > 0)
   const terminal = counts.rejected + counts.withdrawn
   const flowStages = FLOW_STAGES.map((stage) => ({
     ...stage,
@@ -166,7 +159,7 @@ export default function DashboardPage() {
   const TypeIcon = TYPE_ICON[nextInterview?.type] || CalendarDays
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8 md:py-10">
+    <div className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Dashboard</p>

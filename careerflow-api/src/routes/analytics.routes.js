@@ -11,5 +11,6 @@ router.get('/dashboard', analyticsController.getDashboard)
 router.get('/trends', analyticsController.getTrends)
 router.get('/areas', analyticsController.getAreas)
 router.get('/performance', analyticsController.getPerformance)
+router.get('/applications/pipeline', analyticsController.getApplicationPipeline)
 
 export default router

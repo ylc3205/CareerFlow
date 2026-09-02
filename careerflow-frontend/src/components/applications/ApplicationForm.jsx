@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import ErrorMessage from '../ErrorMessage.jsx'
+import { Button } from '../ui/button.jsx'
+import { Input } from '../ui/input.jsx'
+import { Label } from '../ui/label.jsx'
+import { Textarea } from '../ui/textarea.jsx'
 import { APPLICATION_STATUSES } from '../../utils/constants.js'
 import { buildApplicationPayload } from '../../utils/applicationForm.js'
+
+const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+const textareaClass = `${inputClass} min-h-[80px] resize-y`
+const selectClass = inputClass
+const fieldClass = "space-y-1.5"
+const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
 
 export default function ApplicationForm({ initialValues, submitLabel = 'Save changes', onSubmit, submitting, apiError }) {
   const [form, setForm] = useState(initialValues)
@@ -21,15 +31,13 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
   }
 
   return (
-    <form className="form form--card" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       {apiError && <ErrorMessage title="Could not save application" message={apiError.message} errors={apiError.errors} />}
 
-      <div className="form__row">
-        <div className="form__field">
-          <label className="form__label" htmlFor="status">
-            Status
-          </label>
-          <select id="status" name="status" className="form__input" value={form.status} onChange={updateField}>
+      <div className={rowClass}>
+        <div className={fieldClass}>
+          <Label htmlFor="status">Status</Label>
+          <select id="status" name="status" className={selectClass} value={form.status} onChange={updateField}>
             {APPLICATION_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -37,22 +45,18 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
             ))}
           </select>
         </div>
-        <div className="form__field">
-          <label className="form__label" htmlFor="appliedAt">
-            Applied date
-          </label>
-          <input id="appliedAt" name="appliedAt" type="date" className="form__input" value={form.appliedAt} onChange={updateField} />
+        <div className={fieldClass}>
+          <Label htmlFor="appliedAt">Applied date</Label>
+          <Input id="appliedAt" name="appliedAt" type="date" className={inputClass} value={form.appliedAt} onChange={updateField} />
         </div>
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="coverLetter">
-          Cover letter
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="coverLetter">Cover letter</Label>
+        <Textarea
           id="coverLetter"
           name="coverLetter"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={6}
           maxLength={10000}
           value={form.coverLetter}
@@ -60,14 +64,12 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
         />
       </div>
 
-      <div className="form__field">
-        <label className="form__label" htmlFor="notes">
-          Notes
-        </label>
-        <textarea
+      <div className={fieldClass}>
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
           id="notes"
           name="notes"
-          className="form__input form__textarea"
+          className={textareaClass}
           rows={4}
           maxLength={3000}
           value={form.notes}
@@ -75,10 +77,10 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
         />
       </div>
 
-      <div className="form__actions">
-        <button type="submit" className="btn btn--primary" disabled={submitting}>
+      <div className="flex items-center gap-3 border-t border-border pt-6">
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Saving...' : submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   )

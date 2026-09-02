@@ -17,7 +17,8 @@ import { request } from './client.js'
 //   GET /analytics/areas?limit=N -> { success, data: { areas: { strongAreas, weakAreas } } }
 //   GET /analytics/performance -> { success, data: { performance: {
 //       totalEvaluations, averages, averageAttemptsPerQuestion,
-//       byCategory: { technical, behavioral, situational: { count, averageScore } } } } }
+//       byCategory: { technical, behavioral, situational: { count, averageScore } } } }
+//   GET /analytics/applications/pipeline -> { success, data: { pipeline: { totalApplications, byStatus } } }
 
 export const getAnalyticsDashboardApi = () =>
   request({ path: '/analytics/dashboard', method: 'GET' })
@@ -39,3 +40,6 @@ export const getAnalyticsAreasApi = (limit = 5) =>
 
 export const getAnalyticsPerformanceApi = () =>
   request({ path: '/analytics/performance', method: 'GET' })
+
+export const getApplicationPipelineApi = () =>
+  request({ path: '/analytics/applications/pipeline', method: 'GET' })

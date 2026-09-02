@@ -10,14 +10,14 @@ const fieldErrorList = (errors) => {
   return []
 }
 
-export default function ErrorMessage({ title = 'Something went wrong', message, errors, variant = 'banner' }) {
+export default function ErrorMessage({ title = 'Something went wrong', message, errors }) {
   const items = fieldErrorList(errors)
 
   return (
-    <div className={`error error--${variant}`} role="alert">
-      {message ? <p className="error__title">{message}</p> : <p className="error__title">{title}</p>}
+    <div className="rounded-sm border border-destructive bg-destructive/10 text-destructive p-4" role="alert">
+      {message ? <p className="font-medium">{message}</p> : <p className="font-medium">{title}</p>}
       {items.length > 0 && (
-        <ul className="error__list">
+        <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
           {items.map((item, index) => (
             <li key={`${item.field}-${index}`}>
               {item.field ? `${item.field}: ` : ''}

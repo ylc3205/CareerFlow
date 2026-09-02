@@ -4,6 +4,10 @@ import { useAuth } from '../auth/useAuth.js'
 import { validateRegister } from '../utils/validators.js'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import PasswordField from '../components/PasswordField.jsx'
+import { Button } from '../components/ui/button.jsx'
+import { Input } from '../components/ui/input.jsx'
+import { Label } from '../components/ui/label.jsx'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card.jsx'
 
 export default function RegisterPage() {
   const { register } = useAuth()
@@ -44,72 +48,76 @@ export default function RegisterPage() {
     }
   }
 
+  const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+  const fieldClass = "space-y-1.5"
+  const errorClass = "text-sm text-destructive"
+
   return (
-    <div className="auth-page">
-      <h1 className="auth-page__title">Create your account</h1>
-      <p className="auth-page__subtitle">Start tracking jobs with AI-powered tools.</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle>Create your account</CardTitle>
+          <CardDescription>Start tracking jobs with AI-powered tools.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {apiError && <ErrorMessage message={apiError.message} errors={apiError.errors} />}
 
-      {apiError && <ErrorMessage message={apiError.message} errors={apiError.errors} />}
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div className={fieldClass}>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                className={inputClass}
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.email)}
+              />
+              {fieldErrors.email && <p className={errorClass}>{fieldErrors.email}</p>}
+            </div>
 
-      <form className="form" onSubmit={handleSubmit} noValidate>
-        <div className="form__field">
-          <label className="form__label" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            className="form__input"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={handleChange}
-            aria-invalid={Boolean(fieldErrors.email)}
-          />
-          {fieldErrors.email && <p className="form__error">{fieldErrors.email}</p>}
-        </div>
+            <div className={fieldClass}>
+              <Label htmlFor="password">Password</Label>
+              <PasswordField
+                id="password"
+                name="password"
+                autoComplete="new-password"
+                placeholder="At least 8 characters"
+                value={form.password}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.password)}
+              />
+              {fieldErrors.password && <p className={errorClass}>{fieldErrors.password}</p>}
+            </div>
 
-        <div className="form__field">
-          <label className="form__label" htmlFor="password">
-            Password
-          </label>
-          <PasswordField
-            id="password"
-            name="password"
-            autoComplete="new-password"
-            placeholder="At least 8 characters"
-            value={form.password}
-            onChange={handleChange}
-            aria-invalid={Boolean(fieldErrors.password)}
-          />
-          {fieldErrors.password && <p className="form__error">{fieldErrors.password}</p>}
-        </div>
+            <div className={fieldClass}>
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <PasswordField
+                id="confirmPassword"
+                name="confirmPassword"
+                autoComplete="new-password"
+                placeholder="Repeat your password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.confirmPassword)}
+              />
+              {fieldErrors.confirmPassword && <p className={errorClass}>{fieldErrors.confirmPassword}</p>}
+            </div>
 
-        <div className="form__field">
-          <label className="form__label" htmlFor="confirmPassword">
-            Confirm password
-          </label>
-          <PasswordField
-            id="confirmPassword"
-            name="confirmPassword"
-            autoComplete="new-password"
-            placeholder="Repeat your password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            aria-invalid={Boolean(fieldErrors.confirmPassword)}
-          />
-          {fieldErrors.confirmPassword && <p className="form__error">{fieldErrors.confirmPassword}</p>}
-        </div>
-
-        <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
-          {submitting ? 'Creating account...' : 'Create account'}
-        </button>
-      </form>
-
-      <p className="auth-page__footer">
-        Already have an account? <Link to="/login">Sign in</Link>
-      </p>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Creating account...' : 'Create account'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Already have an account? <Link to="/login" className="underline hover:no-underline">Sign in</Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

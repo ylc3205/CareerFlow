@@ -1,30 +1,34 @@
+import { Button } from './ui/button.jsx'
+
 export default function Pagination({ page, totalPages, total, onChange }) {
   if (!totalPages || totalPages <= 1) {
     return null
   }
 
   return (
-    <nav className="pagination" aria-label="Pagination">
-      <button
+    <nav className="flex items-center justify-center gap-2" aria-label="Pagination">
+      <Button
         type="button"
-        className="btn btn--ghost btn--sm"
+        variant="outline"
+        size="sm"
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
       >
         Previous
-      </button>
-      <span className="pagination__info">
+      </Button>
+      <span className="font-mono tabular-nums text-sm text-muted-foreground px-2">
         Page {page} of {totalPages}
-        {typeof total === 'number' ? ` · ${total} total` : ''}
+        {typeof total === 'number' ? ` · {total} total` : ''}
       </span>
-      <button
+      <Button
         type="button"
-        className="btn btn--ghost btn--sm"
+        variant="outline"
+        size="sm"
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
       >
         Next
-      </button>
+      </Button>
     </nav>
   )
 }

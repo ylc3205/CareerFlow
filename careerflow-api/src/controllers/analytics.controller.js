@@ -46,4 +46,13 @@ const getPerformance = catchAsync(async (req, res) => {
   })
 })
 
-export { getHistory, getDashboard, getTrends, getAreas, getPerformance }
+const getApplicationPipeline = catchAsync(async (req, res) => {
+  const pipeline = await analyticsService.getApplicationPipeline(req.user.userId)
+
+  res.status(200).json({
+    success: true,
+    data: { pipeline },
+  })
+})
+
+export { getHistory, getDashboard, getTrends, getAreas, getPerformance, getApplicationPipeline }

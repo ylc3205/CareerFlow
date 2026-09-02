@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
 import JobCard from '../components/jobs/JobCard.jsx'
 import JobFilters from '../components/jobs/JobFilters.jsx'
+import { Button } from '../components/ui/button.jsx'
 import { listJobsApi, deleteJobApi } from '../api/jobs.api.js'
 
 export default function JobsPage() {
@@ -93,14 +94,14 @@ export default function JobsPage() {
   const hasFilters = Boolean(search || status)
 
   return (
-    <div className="page">
+    <div className="space-y-6">
       <PageHeader
         title="Jobs"
         subtitle="Track the jobs you've saved."
         actions={
-          <Link to="/jobs/new" className="btn btn--primary">
-            Add job
-          </Link>
+          <Button asChild>
+            <Link to="/jobs/new">Add job</Link>
+          </Button>
         }
       />
 
@@ -116,11 +117,11 @@ export default function JobsPage() {
       {loading && <Loading label="Loading jobs..." />}
 
       {!loading && loadError && (
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load jobs" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -130,9 +131,9 @@ export default function JobsPage() {
             title="No matching jobs"
             description="Try adjusting your search or filters."
             action={
-              <button type="button" className="btn btn--ghost" onClick={clearFilters}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
-              </button>
+              </Button>
             }
           />
         ) : (
@@ -141,16 +142,16 @@ export default function JobsPage() {
             title="No jobs yet"
             description="Add a job posting to start tracking your applications."
             action={
-              <Link to="/jobs/new" className="btn btn--primary">
-                Add job
-              </Link>
+              <Button asChild>
+                <Link to="/jobs/new">Add job</Link>
+              </Button>
             }
           />
         )
       )}
 
       {!loading && !loadError && jobs.length > 0 && (
-        <div className="job-list">
+        <div className="space-y-4">
           {jobs.map((job) => (
             <JobCard key={job._id} job={job} deleting={deletingId === job._id} onDelete={handleDelete} />
           ))}

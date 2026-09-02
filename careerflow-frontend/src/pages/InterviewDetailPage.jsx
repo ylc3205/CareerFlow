@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
-import Badge from '../components/Badge.jsx'
-import Card from '../components/Card.jsx'
+import { Badge } from '../components/ui/badge.jsx'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
+import { Button } from '../components/ui/button.jsx'
 import InterviewForm from '../components/interviews/InterviewForm.jsx'
 import PreparationSection from '../components/interviews/PreparationSection.jsx'
 import PracticeSection from '../components/interviews/PracticeSection.jsx'
@@ -84,13 +85,13 @@ export default function InterviewDetailPage() {
 
   if (loadError) {
     return (
-      <div className="page">
+      <div className="space-y-6">
         <PageHeader title="Interview" subtitle="Could not load this interview." />
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load interview" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -121,31 +122,31 @@ export default function InterviewDetailPage() {
   ].filter(Boolean)
 
   return (
-    <div className="page">
+    <div className="space-y-6">
       <PageHeader
         title={interview.title}
         subtitle={company}
         actions={
           <>
             {editing ? (
-              <button type="button" className="btn btn--ghost" onClick={() => setEditing(false)}>
+              <Button variant="ghost" onClick={() => setEditing(false)}>
                 Cancel
-              </button>
+              </Button>
             ) : (
-              <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>
+              <Button variant="ghost" onClick={() => setEditing(true)}>
                 Edit
-              </button>
+              </Button>
             )}
-            <button type="button" className="btn btn--ghost btn--danger" disabled={deleting} onClick={handleDelete}>
+            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
               {deleting ? 'Deleting...' : 'Delete'}
-            </button>
+            </Button>
           </>
         }
       />
 
       {deleteError && <ErrorMessage title="Could not delete interview" message={deleteError.message} />}
 
-      <div className="interview-detail">
+      <div className="space-y-6">
         {editing ? (
           <InterviewForm
             key="edit"
@@ -158,51 +159,67 @@ export default function InterviewDetailPage() {
         ) : (
           <>
             <Card>
-              <h2 className="job-detail__section-title">Overview</h2>
-              <div className="job-detail__status">
-                <Badge variant={INTERVIEW_TYPE_VARIANT[interview.type] || 'default'}>{interview.type}</Badge>
-                <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>{interview.status}</Badge>
-              </div>
+              <CardHeader>
+                <CardTitle>Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={INTERVIEW_TYPE_VARIANT[interview.type] || 'default'}>
+                    {interview.type}
+                  </Badge>
+                  <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>
+                    {interview.status}
+                  </Badge>
+                </div>
 
-              {metaItems.length > 0 && (
-                <dl className="job-detail__grid">
-                  {metaItems.map((item) => (
-                    <div key={item.label} className="job-detail__cell">
-                      <dt className="job-detail__term">{item.label}</dt>
-                      <dd className="job-detail__value">
-                        {item.url ? (
-                          <a href={item.value} target="_blank" rel="noreferrer">
-                            {item.value}
-                          </a>
-                        ) : item.applicationUrl ? (
-                          <Link to={item.applicationUrl}>{item.value}</Link>
-                        ) : (
-                          item.value
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
+                {metaItems.length > 0 && (
+                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {metaItems.map((item) => (
+                      <div key={item.label} className="space-y-1">
+                        <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {item.label}
+                        </dt>
+                        <dd className="text-sm text-foreground break-all">
+                          {item.url ? (
+                            <a href={item.value} target="_blank" rel="noreferrer" className="hover:underline">
+                              {item.value}
+                            </a>
+                          ) : item.applicationUrl ? (
+                            <Link to={item.applicationUrl} className="hover:underline">
+                              {item.value}
+                            </Link>
+                          ) : (
+                            item.value
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
 
-              {interview.notes && (
-                <p className="job-detail__notes">
-                  <strong>Notes:</strong> {interview.notes}
-                </p>
-              )}
-              {interview.feedback && (
-                <p className="job-detail__notes">
-                  <strong>Feedback:</strong> {interview.feedback}
-                </p>
-              )}
+                {interview.notes && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Notes:</strong> {interview.notes}
+                  </p>
+                )}
+                {interview.feedback && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Feedback:</strong> {interview.feedback}
+                  </p>
+                )}
+              </CardContent>
             </Card>
 
             <Card>
-              <PreparationSection interviewId={interview._id} />
+              <CardContent className="pt-0">
+                <PreparationSection interviewId={interview._id} />
+              </CardContent>
             </Card>
 
             <Card>
-              <PracticeSection interviewId={interview._id} />
+              <CardContent className="pt-0">
+                <PracticeSection interviewId={interview._id} />
+              </CardContent>
             </Card>
           </>
         )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import Badge from '../Badge.jsx'
-import Card from '../Card.jsx'
+import { Card } from '../ui/card.jsx'
+import { Badge } from '../ui/badge.jsx'
+import { Button } from '../ui/button.jsx'
 import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import EmptyState from '../EmptyState.jsx'
@@ -97,7 +98,7 @@ export default function PracticeSection({ interviewId }) {
 
   if (loading) {
     return (
-      <div className="practice">
+      <div className="space-y-6">
         <Loading label="Loading practice sessions…" />
       </div>
     )
@@ -105,22 +106,22 @@ export default function PracticeSection({ interviewId }) {
 
   if (loadError) {
     return (
-      <div className="practice">
-        <div className="page__error">
+      <div className="space-y-6">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load practice sessions" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <section className="practice">
-      <header className="prep__header">
-        <h2 className="prep__title">Interview Practice</h2>
-        <p className="prep__subtitle">
+    <section className="space-y-6">
+      <header>
+        <h2 className="text-lg font-semibold tracking-tight">Interview Practice</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Answer the prepared questions and get AI feedback on each answer.
         </p>
       </header>
@@ -143,10 +144,10 @@ export default function PracticeSection({ interviewId }) {
         />
       ) : (
         <>
-          <div className="practice__actions">
-            <button type="button" className="btn btn--primary" disabled={creating} onClick={handleCreate}>
+          <div className="flex gap-2">
+            <Button disabled={creating} onClick={handleCreate}>
               {creating ? 'Starting…' : 'Start new practice session'}
-            </button>
+            </Button>
           </div>
 
           {sessions.length === 0 ? (
@@ -155,51 +156,44 @@ export default function PracticeSection({ interviewId }) {
               description="Start a session to answer the prepared questions and receive AI feedback."
             />
           ) : (
-            <ul className="practice-list">
+            <div className="space-y-4">
               {sessions.map((session) => {
                 const answered = answeredCountOf(session)
                 const total = (session.answers || []).length
                 return (
-                  <li key={session._id}>
-                    <Card className="practice-session-card">
-                      <div className="practice-session-card__main">
-                        <div className="practice-session-card__heading">
-                          <Badge variant={PRACTICE_STATUS_VARIANT[session.status] || 'default'}>
-                            {PRACTICE_STATUS_LABEL[session.status] || session.status}
-                          </Badge>
-                          <span className="practice-session-card__date">
-                            {formatDisplayDate(session.createdAt)}
-                          </span>
-                        </div>
-                        <p className="practice-session-card__meta">
-                          {answered}/{total} answered
-                          {session.summary && session.summary.overallScore != null
-                            ? ` · Overall ${session.summary.overallScore}`
-                            : ''}
-                        </p>
+                  <Card key={session._id} className="flex items-center justify-between gap-4 p-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={PRACTICE_STATUS_VARIANT[session.status] || 'default'}>
+                          {PRACTICE_STATUS_LABEL[session.status] || session.status}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {formatDisplayDate(session.createdAt)}
+                        </span>
                       </div>
-                      <div className="practice-session-card__actions">
-                        <button type="button" className="btn btn--ghost btn--sm" onClick={() => setActiveSession(session)}>
-                          {session.status === 'completed'
-                            ? 'View results'
-                            : session.status === 'not_started'
-                              ? 'Start'
-                              : 'Continue'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn--ghost btn--danger btn--sm"
-                          disabled={deletingId === session._id}
-                          onClick={() => handleDelete(session)}
-                        >
-                          {deletingId === session._id ? 'Deleting…' : 'Delete'}
-                        </button>
-                      </div>
-                    </Card>
-                  </li>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {answered}/{total} answered
+                        {session.summary && session.summary.overallScore != null
+                          ? ` · Overall ${session.summary.overallScore}`
+                          : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setActiveSession(session)}>
+                        {session.status === 'completed'
+                          ? 'View results'
+                          : session.status === 'not_started'
+                            ? 'Start'
+                            : 'Continue'}
+                      </Button>
+                      <Button variant="destructive" size="sm" disabled={deletingId === session._id} onClick={() => handleDelete(session)}>
+                        {deletingId === session._id ? 'Deleting…' : 'Delete'}
+                      </Button>
+                    </div>
+                  </Card>
                 )
               })}
-            </ul>
+            </div>
           )}
         </>
       )}

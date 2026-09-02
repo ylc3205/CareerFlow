@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Input } from './ui/input.jsx'
+import { Button } from './ui/button.jsx'
+import { Eye, EyeOff } from 'lucide-react'
 
 const PasswordField = ({
   id,
@@ -16,29 +19,31 @@ const PasswordField = ({
   const toggleLabel = visible ? 'Hide password' : 'Show password'
 
   return (
-    <div className="password-field">
-      <input
+    <div className="relative">
+      <Input
         id={id}
         name={name}
         type={inputType}
-        className="form__input"
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
         value={value}
         onChange={onChange}
         aria-label={ariaLabel}
+        className="pr-10"
         {...rest}
       />
-      <button
+      <Button
         type="button"
-        className="password-field__toggle"
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
         onClick={() => setVisible((prev) => !prev)}
         aria-label={toggleLabel}
         aria-pressed={visible}
       >
-        {visible ? 'Hide' : 'Show'}
-      </button>
+        {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </Button>
     </div>
   )
 }

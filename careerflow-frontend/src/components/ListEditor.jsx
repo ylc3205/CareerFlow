@@ -1,3 +1,4 @@
+import { Button } from './ui/button.jsx'
 import { newItemId } from '../utils/format.js'
 
 export default function ListEditor({ items, onChange, renderItem, addLabel = 'Add item', emptyLabel = 'No items yet', emptyItem = {} }) {
@@ -10,26 +11,26 @@ export default function ListEditor({ items, onChange, renderItem, addLabel = 'Ad
   }
 
   return (
-    <div className="list-editor">
+    <div className="space-y-4">
       {items.length === 0 ? (
-        <p className="list-editor__empty">{emptyLabel}</p>
+        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
       ) : (
-        <ul className="list-editor__items">
+        <ul className="space-y-4">
           {items.map((item, index) => (
-            <li key={item._cid ?? item._id ?? index} className="list-editor__item">
-              <div className="list-editor__body">{renderItem(item, index)}</div>
-              <div className="list-editor__actions">
-                <button type="button" className="btn btn--danger btn--sm" onClick={() => removeItem(index)}>
+            <li key={item._cid ?? item._id ?? index} className="flex flex-col gap-3 rounded-sm border border-border bg-card p-4">
+              <div>{renderItem(item, index)}</div>
+              <div className="flex justify-end">
+                <Button variant="destructive" size="sm" onClick={() => removeItem(index)}>
                   Remove
-                </button>
+                </Button>
               </div>
             </li>
           ))}
         </ul>
       )}
-      <button type="button" className="btn btn--ghost btn--sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem}>
         + {addLabel}
-      </button>
+      </Button>
     </div>
   )
 }

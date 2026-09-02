@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
-import Card from '../components/Card.jsx'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card.jsx'
+import { Button } from '../components/ui/button.jsx'
 import ScoreGauge from '../components/ScoreGauge.jsx'
 import StatCard from '../components/analytics/StatCard.jsx'
 import ScoreBreakdown from '../components/analytics/ScoreBreakdown.jsx'
@@ -55,13 +56,13 @@ export default function AnalyticsPage() {
 
   if (loadError || !dashboard) {
     return (
-      <div className="page">
+      <div className="space-y-6">
         <PageHeader title="Analytics" subtitle="Track your interview practice performance." />
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load analytics" message={loadError?.message || 'No data returned.'} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -70,10 +71,11 @@ export default function AnalyticsPage() {
   const { totals, averages, bestSession, recentSessions, trend, strongAreas, weakAreas } = dashboard
 
   return (
-    <div className="page">
+    <div className="space-y-6">
       <PageHeader title="Analytics" subtitle="Track your interview practice performance." />
 
-      <div className="stat-grid">
+      {/* LEVEL 1: KPI Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Practice sessions" value={totals.totalSessions} />
         <StatCard label="Completed" value={totals.completedSessions} />
         <StatCard label="In progress" value={totals.inProgressSessions} />
@@ -84,104 +86,139 @@ export default function AnalyticsPage() {
         />
       </div>
 
-      <div className="analytics-grid">
+      {/* LEVEL 2: Performance Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h2 className="job-detail__section-title">Average scores</h2>
-          <p className="analytics__subtitle">Averages across completed session summaries.</p>
-          <ScoreBreakdown
-            overall={averages.overallScore ?? null}
-            scores={[
-              { label: 'Technical', value: averages.technicalScore ?? null },
-              { label: 'Communication', value: averages.communicationScore ?? null },
-              { label: 'Behavioral', value: averages.behavioralScore ?? null },
-            ]}
-            emptyText="Complete a practice session to see your average scores."
-          />
+          <CardHeader>
+            <CardTitle>Average scores</CardTitle>
+            <CardDescription>Averages across completed session summaries.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScoreBreakdown
+              overall={averages.overallScore ?? null}
+              scores={[
+                { label: 'Technical', value: averages.technicalScore ?? null },
+                { label: 'Communication', value: averages.communicationScore ?? null },
+                { label: 'Behavioral', value: averages.behavioralScore ?? null },
+              ]}
+              emptyText="Complete a practice session to see your average scores."
+            />
+          </CardContent>
         </Card>
 
         <Card>
-          <h2 className="job-detail__section-title">Best session</h2>
-          {bestSession ? (
-            <div className="best-session">
-              <div className="best-session__score">
+          <CardHeader>
+            <CardTitle>Best session</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {bestSession ? (
+              <div className="flex items-center gap-6 flex-wrap">
                 <ScoreGauge score={bestSession.overallScore} size={104} caption="Best" />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium truncate">{bestSession.interview?.title || 'Interview'}</p>
+                  {bestSession.job && (
+                    <p className="text-sm text-muted-foreground truncate">
+                      {bestSession.job.title}
+                      {bestSession.job.company ? ` — ${bestSession.job.company}` : ''}
+                    </p>
+                  )}
+                  {bestSession.completedAt && (
+                    <p className="text-xs text-muted-foreground">{formatDisplayDate(bestSession.completedAt)}</p>
+                  )}
+                </div>
               </div>
-              <div className="best-session__info">
-                <div className="best-session__title">{bestSession.interview?.title || 'Interview'}</div>
-                {bestSession.job && (
-                  <div className="best-session__sub">
-                    {bestSession.job.title}
-                    {bestSession.job.company ? ` — ${bestSession.job.company}` : ''}
-                  </div>
-                )}
-                {bestSession.completedAt && (
-                  <div className="best-session__date">{formatDisplayDate(bestSession.completedAt)}</div>
-                )}
+            ) : (
+              <div className="flex flex-col items-center gap-3 rounded-sm border border-dashed border-border p-8 text-center">
+                <p className="text-sm text-muted-foreground">No completed sessions yet.</p>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/interviews">Start practicing</Link>
+                </Button>
               </div>
-            </div>
-          ) : (
-            <p className="job-detail__empty">No completed sessions yet.</p>
-          )}
+            )}
+          </CardContent>
         </Card>
       </div>
 
-      <div className="analytics-grid">
+      {/* LEVEL 3-4: Recent Sessions + Category Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h2 className="job-detail__section-title">Recent sessions</h2>
-          {recentSessions.length > 0 ? (
-            <ul className="recent-list">
-              {recentSessions.map((session) => (
-                <li key={session.sessionId} className="recent-list__item">
-                  <div className="recent-list__main">
-                    <div className="recent-list__title">
-                      {session.interview?.title || 'Interview'}
+          <CardHeader>
+            <CardTitle>Recent sessions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentSessions.length > 0 ? (
+              <ul className="space-y-3">
+                {recentSessions.map((session) => (
+                  <li key={session.sessionId} className="flex items-center justify-between gap-4 rounded-sm border border-border bg-card p-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{session.interview?.title || 'Interview'}</p>
+                      <p className="mt-1 text-sm text-muted-foreground truncate">
+                        {session.job?.company || session.job?.title || ''}
+                        {session.completedAt ? ` · ${formatDisplayDate(session.completedAt)}` : ''}
+                      </p>
                     </div>
-                    <div className="recent-list__meta">
-                      {session.job?.company || session.job?.title || ''}
-                      {session.completedAt ? ` · ${formatDisplayDate(session.completedAt)}` : ''}
-                    </div>
-                  </div>
-                  <span className="recent-list__score">{session.overallScore}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="job-detail__empty">No completed sessions yet.</p>
-          )}
+                    <span className="font-mono tabular-nums text-lg shrink-0">{session.overallScore}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col items-center gap-3 rounded-sm border border-dashed border-border p-8 text-center">
+                <p className="text-sm text-muted-foreground">No completed sessions yet.</p>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/interviews">Start practicing</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
         </Card>
 
         <Card>
-          <h2 className="job-detail__section-title">Performance by category</h2>
-          <CategoryPerformance performance={performance} />
+          <CardHeader>
+            <CardTitle>Performance by category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CategoryPerformance performance={performance} />
+          </CardContent>
         </Card>
       </div>
 
-      <div className="analytics-grid">
+      {/* LEVEL 4-5: Score Trend + Areas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h2 className="job-detail__section-title">Score trend</h2>
-          <TrendChart trend={trend} />
+          <CardHeader>
+            <CardTitle>Score trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TrendChart trend={trend} />
+          </CardContent>
         </Card>
 
         <Card>
-          <h2 className="job-detail__section-title">Areas</h2>
-          <div className="areas">
+          <CardHeader>
+            <CardTitle>Areas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <AreaList title="Strong areas" tone="strong" areas={strongAreas} emptyText="No strengths recorded yet." />
             <AreaList title="Areas to improve" tone="weak" areas={weakAreas} emptyText="No weaknesses recorded yet." />
-          </div>
+          </CardContent>
         </Card>
       </div>
 
+      {/* LEVEL 5: Practice History */}
       <Card>
-        <HistorySection />
+        <CardContent className="pt-0">
+          <HistorySection />
+        </CardContent>
       </Card>
 
-      <div className="analytics__quick-links">
-        <Link to="/interviews" className="btn btn--ghost">
-          Go to interviews
-        </Link>
-        <Link to="/jobs" className="btn btn--ghost">
-          Browse jobs
-        </Link>
+      {/* Primary CTA */}
+      <div className="flex gap-3 pt-4 border-t border-border">
+        <Button asChild>
+          <Link to="/interviews">Start practicing</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/jobs">Browse jobs</Link>
+        </Button>
       </div>
     </div>
   )

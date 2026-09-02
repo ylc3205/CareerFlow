@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
-import Badge from '../components/Badge.jsx'
-import Card from '../components/Card.jsx'
+import { Badge } from '../components/ui/badge.jsx'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
+import { Button } from '../components/ui/button.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import ApplicationForm from '../components/applications/ApplicationForm.jsx'
 import ApplicationStatusTimeline from '../components/applications/ApplicationStatusTimeline.jsx'
@@ -135,13 +136,13 @@ export default function ApplicationDetailPage() {
 
   if (loadError) {
     return (
-      <div className="page">
+      <div className="space-y-6">
         <PageHeader title="Application" subtitle="Could not load this application." />
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load application" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )
@@ -156,7 +157,7 @@ export default function ApplicationDetailPage() {
   const subtitle = job ? job.company : 'Linked job removed'
 
   return (
-    <div className="page">
+    <div className="space-y-6">
       <PageHeader
         title={title}
         subtitle={subtitle}
@@ -164,29 +165,29 @@ export default function ApplicationDetailPage() {
           <>
             {!editing && !addingInterview && (
               <>
-                <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>
+                <Button variant="ghost" onClick={() => setEditing(true)}>
                   Edit
-                </button>
-                <button type="button" className="btn btn--primary" onClick={() => setAddingInterview(true)}>
+                </Button>
+                <Button onClick={() => setAddingInterview(true)}>
                   Add interview
-                </button>
+                </Button>
               </>
             )}
             {(editing || addingInterview) && (
-              <button type="button" className="btn btn--ghost" onClick={cancelInline}>
+              <Button variant="ghost" onClick={cancelInline}>
                 Cancel
-              </button>
+              </Button>
             )}
-            <button type="button" className="btn btn--ghost btn--danger" disabled={deleting} onClick={handleDelete}>
+            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
               {deleting ? 'Deleting...' : 'Delete'}
-            </button>
+            </Button>
           </>
         }
       />
 
       {deleteError && <ErrorMessage title="Could not delete application" message={deleteError.message} />}
 
-      <div className="app-detail">
+      <div className="space-y-6">
         {editing ? (
           <ApplicationForm
             key="edit"
@@ -199,105 +200,119 @@ export default function ApplicationDetailPage() {
         ) : (
           <>
             <Card>
-              <h2 className="job-detail__section-title">Overview</h2>
-              <div className="job-detail__status">
-                <Badge variant={APPLICATION_STATUS_VARIANT[application.status] || 'default'}>{application.status}</Badge>
-              </div>
-              <ApplicationStatusTimeline status={application.status} />
+              <CardHeader>
+                <CardTitle>Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant={APPLICATION_STATUS_VARIANT[application.status] || 'default'}>
+                    {application.status}
+                  </Badge>
+                </div>
+                <ApplicationStatusTimeline status={application.status} />
 
-              <dl className="job-detail__grid">
-                {application.appliedAt && (
-                  <div className="job-detail__cell">
-                    <dt className="job-detail__term">Applied</dt>
-                    <dd className="job-detail__value">{formatDisplayDate(application.appliedAt)}</dd>
-                  </div>
-                )}
-                {job && (
-                  <div className="job-detail__cell">
-                    <dt className="job-detail__term">Job</dt>
-                    <dd className="job-detail__value">
-                      <Link to={`/jobs/${job._id}`}>{job.title}</Link>
-                    </dd>
-                  </div>
-                )}
-                {job?.company && (
-                  <div className="job-detail__cell">
-                    <dt className="job-detail__term">Company</dt>
-                    <dd className="job-detail__value">{job.company}</dd>
-                  </div>
-                )}
-                {job?.location && (
-                  <div className="job-detail__cell">
-                    <dt className="job-detail__term">Location</dt>
-                    <dd className="job-detail__value">{job.location}</dd>
-                  </div>
-                )}
-                {job?.sourceUrl && (
-                  <div className="job-detail__cell">
-                    <dt className="job-detail__term">Source URL</dt>
-                    <dd className="job-detail__value">
-                      <a href={job.sourceUrl} target="_blank" rel="noreferrer">
-                        {job.sourceUrl}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-              </dl>
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {application.appliedAt && (
+                    <div className="space-y-1">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Applied</dt>
+                      <dd className="text-sm text-foreground">{formatDisplayDate(application.appliedAt)}</dd>
+                    </div>
+                  )}
+                  {job && (
+                    <div className="space-y-1">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Job</dt>
+                      <dd className="text-sm text-foreground">
+                        <Link to={`/jobs/${job._id}`} className="hover:underline">
+                          {job.title}
+                        </Link>
+                      </dd>
+                    </div>
+                  )}
+                  {job?.company && (
+                    <div className="space-y-1">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Company</dt>
+                      <dd className="text-sm text-foreground">{job.company}</dd>
+                    </div>
+                  )}
+                  {job?.location && (
+                    <div className="space-y-1">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Location</dt>
+                      <dd className="text-sm text-foreground">{job.location}</dd>
+                    </div>
+                  )}
+                  {job?.sourceUrl && (
+                    <div className="space-y-1">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Source URL</dt>
+                      <dd className="text-sm text-foreground">
+                        <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="hover:underline">
+                          {job.sourceUrl}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
 
-              {application.coverLetter && (
-                <p className="job-detail__notes">
-                  <strong>Cover letter:</strong> {application.coverLetter}
-                </p>
-              )}
-              {application.notes && (
-                <p className="job-detail__notes">
-                  <strong>Notes:</strong> {application.notes}
-                </p>
-              )}
+                {application.coverLetter && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Cover letter:</strong> {application.coverLetter}
+                  </p>
+                )}
+                {application.notes && (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Notes:</strong> {application.notes}
+                  </p>
+                )}
+              </CardContent>
             </Card>
 
             <Card>
-              <div className="card__header">
-                <h2 className="job-detail__section-title">Interviews</h2>
-                {!addingInterview && (
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setAddingInterview(true)}>
-                    Add interview
-                  </button>
-                )}
-              </div>
-              {interviewsLoading && <Loading label="Loading interviews…" />}
-              {!interviewsLoading && interviewsError && (
-                <div className="page__error">
-                  <ErrorMessage title="Could not load interviews" message={interviewsError.message} />
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--sm"
-                    onClick={() => setInterviewsReloadKey((key) => key + 1)}
-                  >
-                    Retry
-                  </button>
+              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <div className="space-y-1.5">
+                  <CardTitle>Interviews</CardTitle>
                 </div>
-              )}
-              {!interviewsLoading && !interviewsError && interviews.length === 0 && (
-                <EmptyState title="No interviews yet" description="Add an interview to track it here." />
-              )}
-              {!interviewsLoading && !interviewsError && interviews.length > 0 && (
-                <ul className="interview-list">
-                  {interviews.map((interview) => (
-                    <li key={interview._id} className="interview-list__item">
-                      <div className="interview-list__main">
-                        <Link to={`/interviews/${interview._id}`} className="interview-list__title">
-                          {interview.title}
-                        </Link>
-                        <div className="interview-list__meta">
-                          <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>{interview.status}</Badge>
-                          {interview.scheduledDate && <span>{formatDisplayDate(interview.scheduledDate)}</span>}
+                {!addingInterview && (
+                  <Button variant="ghost" size="sm" onClick={() => setAddingInterview(true)}>
+                    Add interview
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="pt-0">
+                {interviewsLoading && <Loading label="Loading interviews…" />}
+                {!interviewsLoading && interviewsError && (
+                  <div className="flex gap-3">
+                    <ErrorMessage title="Could not load interviews" message={interviewsError.message} />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setInterviewsReloadKey((key) => key + 1)}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
+                {!interviewsLoading && !interviewsError && interviews.length === 0 && (
+                  <EmptyState title="No interviews yet" description="Add an interview to track it here." />
+                )}
+                {!interviewsLoading && !interviewsError && interviews.length > 0 && (
+                  <ul className="space-y-3">
+                    {interviews.map((interview) => (
+                      <li key={interview._id} className="flex items-center justify-between gap-4 rounded-sm border border-border bg-card p-4">
+                        <div className="min-w-0 flex-1">
+                          <Link to={`/interviews/${interview._id}`} className="font-medium hover:underline">
+                            {interview.title}
+                          </Link>
+                          <div className="mt-1 flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+                            <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>
+                              {interview.status}
+                            </Badge>
+                            {interview.scheduledDate && <span>{formatDisplayDate(interview.scheduledDate)}</span>}
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
             </Card>
           </>
         )}

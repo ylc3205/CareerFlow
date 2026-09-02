@@ -1,23 +1,27 @@
-const TONE_CHIP = {
-  strong: 'chip--success',
-  weak: 'chip--danger',
-  neutral: 'chip--default',
+import { Badge } from '../ui/badge.jsx'
+
+const TONE_VARIANT = {
+  strong: 'success',
+  weak: 'destructive',
+  neutral: 'outline',
 }
 
 export default function AreaList({ title, areas = [], tone = 'neutral', emptyText = 'Nothing yet' }) {
+  const variant = TONE_VARIANT[tone] || TONE_VARIANT.neutral
+
   return (
-    <div className="area-list">
-      <h3 className="area-list__title">{title}</h3>
+    <div className="space-y-3">
+      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</h3>
       {areas.length > 0 ? (
-        <div className="area-list__chips">
+        <div className="flex flex-wrap gap-2">
           {areas.map(({ area, count }) => (
-            <span key={area} className={`chip ${TONE_CHIP[tone] || TONE_CHIP.neutral}`}>
-              {area} <strong>×{count}</strong>
-            </span>
+            <Badge key={area} variant={variant}>
+              {area} <span className="font-mono tabular-nums">×{count}</span>
+            </Badge>
           ))}
         </div>
       ) : (
-        <p className="area-list__empty">{emptyText}</p>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       )}
     </div>
   )

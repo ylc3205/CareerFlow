@@ -3,6 +3,7 @@ import { getProfileApi, updateProfileApi } from '../api/profile.api.js'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import ListEditor from '../components/ListEditor.jsx'
+import { Button } from '../components/ui/button.jsx'
 import { toDateInputValue, splitList, joinList, compact, newItemId } from '../utils/format.js'
 
 const hydrateEducation = (item) => ({
@@ -23,6 +24,20 @@ const hydrateExperience = (item) => ({
   endDate: toDateInputValue(item.endDate),
   current: Boolean(item.current),
 })
+
+const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+
+const textareaClass = `${inputClass} min-h-[80px] resize-y`
+
+const labelClass = "text-sm font-medium"
+
+const fieldClass = "space-y-1.5"
+
+const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
+
+const sectionClass = "border-t border-border pt-6"
+
+const sectionTitleClass = "text-lg font-semibold tracking-tight"
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
@@ -151,60 +166,62 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="page">
-      <header className="page__header">
-        <h1 className="page__title">Profile</h1>
-        <p className="page__subtitle">Keep your professional details up to date for better AI matching.</p>
+    <div className="space-y-6">
+      <header className="flex items-end justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Keep your professional details up to date for better AI matching.</p>
+        </div>
       </header>
 
       {successMessage && (
-        <div className="notice notice--success" role="status">
+        <div className="rounded-sm border border-success bg-success/10 text-success p-4" role="status">
           {successMessage}
         </div>
       )}
       {saveError && <ErrorMessage title="Could not save profile" message={saveError.message} errors={saveError.errors} />}
 
-      <form className="form form--card" onSubmit={handleSave}>
-        <div className="form__row">
-          <div className="form__field">
-            <label className="form__label" htmlFor="fullName">Full name</label>
-            <input id="fullName" name="fullName" className="form__input" value={form.fullName} onChange={updateField} />
+      <form className="space-y-6" onSubmit={handleSave}>
+        <div className={rowClass}>
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="fullName">Full name</label>
+            <input id="fullName" name="fullName" className={inputClass} value={form.fullName} onChange={updateField} />
           </div>
-          <div className="form__field">
-            <label className="form__label" htmlFor="headline">Headline</label>
-            <input id="headline" name="headline" className="form__input" placeholder="e.g. Frontend Engineer" value={form.headline} onChange={updateField} />
-          </div>
-        </div>
-
-        <div className="form__row">
-          <div className="form__field">
-            <label className="form__label" htmlFor="location">Location</label>
-            <input id="location" name="location" className="form__input" placeholder="City, Country" value={form.location} onChange={updateField} />
-          </div>
-          <div className="form__field">
-            <label className="form__label" htmlFor="phone">Phone</label>
-            <input id="phone" name="phone" className="form__input" value={form.phone} onChange={updateField} />
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="headline">Headline</label>
+            <input id="headline" name="headline" className={inputClass} placeholder="e.g. Frontend Engineer" value={form.headline} onChange={updateField} />
           </div>
         </div>
 
-        <div className="form__field">
-          <label className="form__label" htmlFor="bio">Bio</label>
-          <textarea id="bio" name="bio" className="form__input form__textarea" rows={4} placeholder="A short summary about yourself" value={form.bio} onChange={updateField} />
-        </div>
-
-        <div className="form__row">
-          <div className="form__field">
-            <label className="form__label" htmlFor="skills">Skills</label>
-            <input id="skills" name="skills" className="form__input" placeholder="JavaScript, React, Node.js" value={form.skills} onChange={updateField} />
+        <div className={rowClass}>
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="location">Location</label>
+            <input id="location" name="location" className={inputClass} placeholder="City, Country" value={form.location} onChange={updateField} />
           </div>
-          <div className="form__field">
-            <label className="form__label" htmlFor="yearsOfExperience">Years of experience</label>
-            <input id="yearsOfExperience" name="yearsOfExperience" type="number" min="0" className="form__input" value={form.yearsOfExperience} onChange={updateField} />
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="phone">Phone</label>
+            <input id="phone" name="phone" className={inputClass} value={form.phone} onChange={updateField} />
           </div>
         </div>
 
-        <section className="form__section">
-          <h2 className="form__section-title">Education</h2>
+        <div className={fieldClass}>
+          <label className={labelClass} htmlFor="bio">Bio</label>
+          <textarea id="bio" name="bio" className={textareaClass} rows={4} placeholder="A short summary about yourself" value={form.bio} onChange={updateField} />
+        </div>
+
+        <div className={rowClass}>
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="skills">Skills</label>
+            <input id="skills" name="skills" className={inputClass} placeholder="JavaScript, React, Node.js" value={form.skills} onChange={updateField} />
+          </div>
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="yearsOfExperience">Years of experience</label>
+            <input id="yearsOfExperience" name="yearsOfExperience" type="number" min="0" className={inputClass} value={form.yearsOfExperience} onChange={updateField} />
+          </div>
+        </div>
+
+        <section className={sectionClass}>
+          <h2 className={sectionTitleClass}>Education</h2>
           <ListEditor
             items={form.education}
             onChange={(education) => setForm((prev) => ({ ...prev, education }))}
@@ -213,30 +230,30 @@ export default function ProfilePage() {
             emptyItem={{ school: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '' }}
             renderItem={(item, index) => (
               <>
-                <div className="form__row">
-                  <div className="form__field">
-                    <label className="form__label">School</label>
-                    <input className="form__input" value={item.school} onChange={(e) => updateListItem('education', index, { school: e.target.value })} />
+                <div className={rowClass}>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>School</label>
+                    <input className={inputClass} value={item.school} onChange={(e) => updateListItem('education', index, { school: e.target.value })} />
                   </div>
-                  <div className="form__field">
-                    <label className="form__label">Degree</label>
-                    <input className="form__input" value={item.degree} onChange={(e) => updateListItem('education', index, { degree: e.target.value })} />
-                  </div>
-                </div>
-                <div className="form__row">
-                  <div className="form__field">
-                    <label className="form__label">Field of study</label>
-                    <input className="form__input" value={item.fieldOfStudy} onChange={(e) => updateListItem('education', index, { fieldOfStudy: e.target.value })} />
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Degree</label>
+                    <input className={inputClass} value={item.degree} onChange={(e) => updateListItem('education', index, { degree: e.target.value })} />
                   </div>
                 </div>
-                <div className="form__row">
-                  <div className="form__field">
-                    <label className="form__label">Start date</label>
-                    <input type="date" className="form__input" value={item.startDate} onChange={(e) => updateListItem('education', index, { startDate: e.target.value })} />
+                <div className={rowClass}>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Field of study</label>
+                    <input className={inputClass} value={item.fieldOfStudy} onChange={(e) => updateListItem('education', index, { fieldOfStudy: e.target.value })} />
                   </div>
-                  <div className="form__field">
-                    <label className="form__label">End date</label>
-                    <input type="date" className="form__input" value={item.endDate} onChange={(e) => updateListItem('education', index, { endDate: e.target.value })} />
+                </div>
+                <div className={rowClass}>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Start date</label>
+                    <input type="date" className={inputClass} value={item.startDate} onChange={(e) => updateListItem('education', index, { startDate: e.target.value })} />
+                  </div>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>End date</label>
+                    <input type="date" className={inputClass} value={item.endDate} onChange={(e) => updateListItem('education', index, { endDate: e.target.value })} />
                   </div>
                 </div>
               </>
@@ -244,8 +261,8 @@ export default function ProfilePage() {
           />
         </section>
 
-        <section className="form__section">
-          <h2 className="form__section-title">Experience</h2>
+        <section className={sectionClass}>
+          <h2 className={sectionTitleClass}>Experience</h2>
           <ListEditor
             items={form.experience}
             onChange={(experience) => setForm((prev) => ({ ...prev, experience }))}
@@ -254,35 +271,31 @@ export default function ProfilePage() {
             emptyItem={{ company: '', position: '', description: '', startDate: '', endDate: '', current: false }}
             renderItem={(item, index) => (
               <>
-                <div className="form__row">
-                  <div className="form__field">
-                    <label className="form__label">Company</label>
-                    <input className="form__input" value={item.company} onChange={(e) => updateListItem('experience', index, { company: e.target.value })} />
+                <div className={rowClass}>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Company</label>
+                    <input className={inputClass} value={item.company} onChange={(e) => updateListItem('experience', index, { company: e.target.value })} />
                   </div>
-                  <div className="form__field">
-                    <label className="form__label">Position</label>
-                    <input className="form__input" value={item.position} onChange={(e) => updateListItem('experience', index, { position: e.target.value })} />
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Position</label>
+                    <input className={inputClass} value={item.position} onChange={(e) => updateListItem('experience', index, { position: e.target.value })} />
                   </div>
                 </div>
-                <div className="form__field">
-                  <label className="form__label">Description</label>
-                  <textarea className="form__input form__textarea" rows={2} value={item.description} onChange={(e) => updateListItem('experience', index, { description: e.target.value })} />
+                <div className={fieldClass}>
+                  <label className={labelClass}>Description</label>
+                  <textarea className={textareaClass} rows={2} value={item.description} onChange={(e) => updateListItem('experience', index, { description: e.target.value })} />
                 </div>
-                <div className="form__row">
-                  <div className="form__field">
-                    <label className="form__label">Start date</label>
-                    <input type="date" className="form__input" value={item.startDate} onChange={(e) => updateListItem('experience', index, { startDate: e.target.value })} />
+                <div className={rowClass}>
+                  <div className={fieldClass}>
+                    <label className={labelClass}>Start date</label>
+                    <input type="date" className={inputClass} value={item.startDate} onChange={(e) => updateListItem('experience', index, { startDate: e.target.value })} />
                   </div>
-                  <div className="form__field">
-                    <label className="form__label">End date</label>
-                    <input type="date" className="form__input" value={item.endDate} disabled={item.current} onChange={(e) => updateListItem('experience', index, { endDate: e.target.value })} />
+                  <div className={fieldClass}>
+                    <label className={labelClass}>End date</label>
+                    <input type="date" className={inputClass} value={item.endDate} disabled={item.current} onChange={(e) => updateListItem('experience', index, { endDate: e.target.value })} />
                   </div>
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={item.current}
-                      onChange={(e) => updateListItem('experience', index, { current: e.target.checked })}
-                    />
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input type="checkbox" className="h-4 w-4 rounded-sm border-border text-primary focus:ring-primary" checked={item.current} onChange={(e) => updateListItem('experience', index, { current: e.target.checked })} />
                     I currently work here
                   </label>
                 </div>
@@ -291,10 +304,10 @@ export default function ProfilePage() {
           />
         </section>
 
-        <div className="form__actions">
-          <button type="submit" className="btn btn--primary" disabled={saving}>
+        <div className="flex items-center gap-3 border-t border-border pt-6">
+          <Button type="submit" disabled={saving}>
             {saving ? 'Saving...' : 'Save profile'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

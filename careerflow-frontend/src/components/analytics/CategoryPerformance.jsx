@@ -11,8 +11,8 @@ export default function CategoryPerformance({ performance }) {
   const rows = Object.entries(byCategory)
 
   return (
-    <div className="category-performance">
-      <div className="category-performance__averages">
+    <div className="space-y-6">
+      <div className="border-b border-border pb-6">
         <ScoreBreakdown
           overall={performance?.averages?.overallScore ?? null}
           scores={[
@@ -25,25 +25,25 @@ export default function CategoryPerformance({ performance }) {
       </div>
 
       {rows.length > 0 ? (
-        <ul className="category-performance__list">
+        <ul className="space-y-3">
           {rows.map(([key, entry]) => (
-            <li key={key} className="category-performance__row">
-              <span className="category-performance__label">{CATEGORY_LABELS[key] || key}</span>
-              <span className="category-performance__count">
-                {entry.count} question{entry.count === 1 ? '' : 's'}
-              </span>
-              <span className="category-performance__avg">
-                {entry.averageScore == null ? 'No data' : `Avg ${entry.averageScore}`}
-              </span>
+            <li key={key} className="flex items-center justify-between gap-4 p-3 rounded-sm border border-border bg-card">
+              <span className="font-medium">{CATEGORY_LABELS[key] || key}</span>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
+                <span>{entry.count} question{entry.count === 1 ? '' : 's'}</span>
+                <span className="font-mono tabular-nums font-medium">
+                  {entry.averageScore == null ? 'No data' : `Avg ${entry.averageScore}`}
+                </span>
+              </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="job-detail__empty">No evaluated questions yet.</p>
+        <p className="text-sm text-muted-foreground">No evaluated questions yet.</p>
       )}
 
       {performance?.totalEvaluations != null && (
-        <p className="category-performance__footer">
+        <p className="text-xs text-muted-foreground border-t border-border pt-4">
           {performance.totalEvaluations} evaluated answer{performance.totalEvaluations === 1 ? '' : 's'} overall
           {performance.averageAttemptsPerQuestion != null
             ? ` · ${performance.averageAttemptsPerQuestion} attempts per question`

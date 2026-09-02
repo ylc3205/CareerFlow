@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
+import { Button } from '../components/ui/button.jsx'
 import JobForm from '../components/jobs/JobForm.jsx'
 import { createJobApi, getJobApi, updateJobApi } from '../api/jobs.api.js'
 import { emptyJobForm, hydrateJobForm } from '../utils/jobForm.js'
@@ -63,20 +64,20 @@ export default function JobFormPage() {
 
   if (loadError) {
     return (
-      <div className="page">
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
         <PageHeader title="Job" subtitle="Could not load this job." />
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load job" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="page">
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
       <PageHeader
         title={isEdit ? 'Edit job' : 'Add a job'}
         subtitle={isEdit ? 'Update the job details.' : 'Save a job posting to track it.'}

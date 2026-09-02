@@ -4,6 +4,7 @@ import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import QuestionList from './QuestionList.jsx'
 import { getPreparationApi, generatePreparationApi } from '../../api/interviews.api.js'
+import { Button } from '../ui/button.jsx'
 
 // Backend contract (source of truth):
 //   GET  /api/interviews/:id/preparation -> { data: { preparation: { questions } } }
@@ -86,10 +87,10 @@ export default function PreparationSection({ interviewId }) {
   }
 
   return (
-    <section className="prep">
-      <header className="prep__header">
-        <h2 className="prep__title">AI Interview Preparation</h2>
-        <p className="prep__subtitle">
+    <section className="space-y-6">
+      <header>
+        <h2 className="text-lg font-semibold tracking-tight">AI Interview Preparation</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           {status === 'success'
             ? `${questions.length} personalized question${questions.length === 1 ? '' : 's'}`
             : 'Generate personalized interview questions based on this interview, the job, and your profile/resume.'}
@@ -97,66 +98,64 @@ export default function PreparationSection({ interviewId }) {
       </header>
 
       {loading && (
-        <div className="prep__loading">
+        <div className="flex items-center gap-2">
           <Loading label="Checking for existing preparation…" />
         </div>
       )}
 
       {!loading && loadError && (
-        <div className="prep__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load interview preparation" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={loadExisting}>
+          <Button variant="outline" size="sm" onClick={loadExisting}>
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
       {!loading && !loadError && (
         <>
           {status === 'idle' && (
-            <div className="prep__cta">
-              <button type="button" className="btn btn--primary" onClick={handleGenerate}>
-                Generate Interview Questions
-              </button>
+            <div className="flex gap-2">
+              <Button onClick={handleGenerate}>Generate Interview Questions</Button>
             </div>
           )}
 
           {status === 'generating' && (
-            <div className="prep__loading">
+            <div className="flex items-center gap-2">
               <Loading label="Generating personalized interview questions…" />
             </div>
           )}
 
           {status === 'success' && (
-            <div className="prep__result">
+            <div className="space-y-4">
               <QuestionList questions={questions} />
-              <p className="prep__next-step">Answer these questions in the Interview Practice section below.</p>
+              <p className="text-sm text-muted-foreground">Answer these questions in the Interview Practice section below.</p>
             </div>
           )}
 
           {status === 'error' && error && (
-            <div className="prep__error">
+            <div className="space-y-3">
               {error.missingProfileResume ? (
                 <>
                   <ErrorMessage
                     title="Profile or resume required"
                     message="Create a profile or add a resume before generating interview questions."
                   />
-                  <div className="prep__error-actions">
-                    <Link to="/profile" className="btn btn--primary btn--sm">
-                      Go to Profile
+                  <div className="flex gap-2">
+                    <Link to="/profile">
+                      <Button variant="default" size="sm">Go to Profile</Button>
                     </Link>
-                    <Link to="/resume" className="btn btn--ghost btn--sm">
-                      Go to Resume
+                    <Link to="/resume">
+                      <Button variant="outline" size="sm">Go to Resume</Button>
                     </Link>
                   </div>
                 </>
               ) : (
                 <>
                   <ErrorMessage title="Unable to generate interview questions right now." message={error.message} errors={error.errors} />
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={handleGenerate}>
+                  <Button variant="outline" size="sm" onClick={handleGenerate}>
                     Try again
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

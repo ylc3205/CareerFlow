@@ -4,7 +4,8 @@ import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import EmptyState from '../EmptyState.jsx'
 import Pagination from '../Pagination.jsx'
-import Badge from '../Badge.jsx'
+import { Badge } from '../ui/badge.jsx'
+import { Button } from '../ui/button.jsx'
 import { getAnalyticsHistoryApi } from '../../api/analytics.api.js'
 import { PRACTICE_STATUSES, PRACTICE_STATUS_LABEL, PRACTICE_STATUS_VARIANT } from '../../utils/constants.js'
 import { formatDisplayDate } from '../../utils/format.js'
@@ -46,14 +47,14 @@ export default function HistorySection() {
   }
 
   return (
-    <section className="history">
-      <div className="card__header">
+    <section className="space-y-6">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="job-detail__section-title">Practice history</h2>
-          <p className="history__subtitle">All of your practice sessions across every interview.</p>
+          <h2 className="text-lg font-semibold tracking-tight">Practice history</h2>
+          <p className="mt-1 text-sm text-muted-foreground">All of your practice sessions across every interview.</p>
         </div>
         <select
-          className="form__input"
+          className="flex h-9 w-[200px] rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           aria-label="Filter history by status"
           value={status}
           onChange={(event) => handleStatusChange(event.target.value)}
@@ -70,11 +71,11 @@ export default function HistorySection() {
       {loading && <Loading label="Loading practice history…" />}
 
       {!loading && loadError && (
-        <div className="page__error">
+        <div className="flex gap-3">
           <ErrorMessage title="Could not load practice history" message={loadError.message} />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setReloadKey((key) => key + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -82,30 +83,35 @@ export default function HistorySection() {
         <EmptyState
           title="No practice sessions yet"
           description="Complete a practice session from an interview page and it will show up here."
+          action={
+            <Button asChild>
+              <Link to="/interviews">Go to interviews</Link>
+            </Button>
+          }
         />
       )}
 
       {!loading && !loadError && sessions.length > 0 && (
-        <ul className="history-list">
+        <div className="space-y-4">
           {sessions.map((session) => {
             const answered = session.answeredCount ?? 0
             const total = session.totalQuestions ?? 0
             return (
-              <li key={session._id} className="history-list__item">
-                <div className="history-list__main">
-                  <div className="history-list__heading">
+              <div key={session._id} className="flex items-start justify-between gap-4 rounded-sm border border-border bg-card p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {session.interview ? (
-                      <Link to={`/interviews/${session.interview._id}`} className="history-list__title">
+                      <Link to={`/interviews/${session.interview._id}`} className="font-medium hover:underline">
                         {session.interview.title}
                       </Link>
                     ) : (
-                      <span className="history-list__title">Interview removed</span>
+                      <span className="font-medium">Interview removed</span>
                     )}
                     <Badge variant={PRACTICE_STATUS_VARIANT[session.status] || 'default'}>
                       {PRACTICE_STATUS_LABEL[session.status] || session.status}
                     </Badge>
                   </div>
-                  <div className="history-list__meta">
+                  <div className="mt-1 flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {session.job && (
                       <span>
                         {session.job.title}
@@ -119,15 +125,15 @@ export default function HistorySection() {
                   </div>
                 </div>
                 {session.summary && session.summary.overallScore != null && (
-                  <div className="history-list__score">
-                    <span className="history-list__score-value">{session.summary.overallScore}</span>
-                    <span className="history-list__score-label">Overall</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono tabular-nums text-lg">{session.summary.overallScore}</span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Overall</span>
                   </div>
                 )}
-              </li>
+              </div>
             )
           })}
-        </ul>
+        </div>
       )}
 
       {!loading && !loadError && pagination && (

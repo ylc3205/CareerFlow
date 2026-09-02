@@ -1,4 +1,4 @@
-import Badge from '../Badge.jsx'
+import { Badge } from '../ui/badge.jsx'
 
 const CATEGORY_LABELS = {
   technical: 'Technical',
@@ -21,16 +21,16 @@ const DIFFICULTY_LABELS = {
 const DIFFICULTY_VARIANTS = {
   easy: 'success',
   medium: 'warning',
-  hard: 'danger',
+  hard: 'destructive',
 }
 
 export default function QuestionList({ questions }) {
   return (
-    <ol className="question-list">
+    <ol className="space-y-4">
       {questions.map((item, index) => (
-        <li key={index} className="question-list__item">
-          <div className="question-list__meta">
-            <span className="question-list__number">{index + 1}.</span>
+        <li key={index} className="rounded-sm border border-border bg-card p-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono tabular-nums text-sm text-muted-foreground">{index + 1}.</span>
             <Badge variant={CATEGORY_VARIANTS[item.category] || 'default'}>
               {CATEGORY_LABELS[item.category] || item.category}
             </Badge>
@@ -38,7 +38,7 @@ export default function QuestionList({ questions }) {
               {DIFFICULTY_LABELS[item.difficulty] || item.difficulty}
             </Badge>
           </div>
-          <p className="question-list__text">{item.question}</p>
+          <p className="mt-3 text-base">{item.question}</p>
         </li>
       ))}
     </ol>
