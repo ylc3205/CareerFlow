@@ -127,6 +127,20 @@ const generateMockResumeParse = () => ({
   },
 })
 
+const generateMockCareerDirection = () => ({
+  title: 'Backend Developer',
+  description: 'Transition to backend development with focus on Node.js, APIs, and databases.',
+  focusSkills: ['Node.js', 'Express.js', 'MongoDB', 'PostgreSQL', 'REST APIs', 'GraphQL', 'Docker', 'Redis', 'TypeScript', 'System Design'],
+  targetRoles: ['Backend Developer', 'Node.js Developer', 'API Engineer'],
+  careerLevel: 'junior',
+  primaryFocus: ['backend', 'apis', 'databases'],
+  secondaryFocus: ['cloud', 'system_design'],
+  learningPriorities: ['Node.js internals', 'Database optimization', 'Microservices patterns', 'Cloud deployment (AWS/GCP)'],
+  rationale: 'Based on your goal to transition into backend development, this direction emphasizes server-side technologies while leveraging your existing programming foundation.',
+  suggestedNextSteps: ['Build a REST API with Node.js/Express', 'Learn PostgreSQL', 'Deploy to cloud platform'],
+  baseType: 'resume',
+})
+
 const parseJson = (text) => {
   if (!text) return null
   let str = String(text).trim()
@@ -245,9 +259,36 @@ const generateResumeParseJSON = async (prompt, schema) => {
   }
 }
 
+const generateCareerDirectionJSON = async (prompt, schema) => {
+  if (AI_MOCK) {
+    return generateMockCareerDirection()
+  }
+
+  const providerName = process.env.DEFAULT_AI_PROVIDER || 'gemini'
+  const provider = providers[providerName]
+  if (!provider) {
+    throw new ApiError(503, 'AI Service Unavailable')
+  }
+
+  try {
+    const text = await provider(prompt, schema)
+    return parseJson(text)
+  } catch (error) {
+    console.error('AI provider failed:', {
+      provider: providerName,
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      status: error?.status || error?.response?.status,
+      message: error?.message,
+      code: error?.code || error?.response?.statusText
+    })
+    throw new ApiError(503, 'AI Service Unavailable')
+  }
+}
+
 export {
   generateStructuredJSON,
   generateInterviewPreparationJSON,
   generateAnswerEvaluationJSON,
   generateResumeParseJSON,
+  generateCareerDirectionJSON,
 }

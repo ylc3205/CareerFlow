@@ -46,8 +46,30 @@ export const splitList = (value) =>
     .map((item) => item.trim())
     .filter(Boolean)
 
-// Join an array into a comma-separated string for editing.
 export const joinList = (list) => (Array.isArray(list) ? list.join(', ') : '')
+
+export const splitLines = (value) =>
+  String(value || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+export const joinLines = (list) => (Array.isArray(list) ? list.join('\n') : '')
+
+export const deepEqual = (a, b) => {
+  if (a === b) return true
+  if (a === null || b === null || typeof a !== typeof b) return false
+  if (typeof a !== 'object') return false
+  if (Array.isArray(a) !== Array.isArray(b)) return false
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false
+    return a.every((item, i) => deepEqual(item, b[i]))
+  }
+  const aKeys = Object.keys(a).sort()
+  const bKeys = Object.keys(b).sort()
+  if (aKeys.length !== bKeys.length) return false
+  return aKeys.every((k, i) => aKeys[i] === bKeys[i] && deepEqual(a[k], b[k]))
+}
 
 // Drop undefined/null keys before sending to the backend ($set).
 export const compact = (obj) => {

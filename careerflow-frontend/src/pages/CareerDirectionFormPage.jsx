@@ -20,6 +20,7 @@ export default function CareerDirectionFormPage() {
   const navigate = useNavigate()
 
   const [initialValues, setInitialValues] = useState(emptyCareerDirectionForm)
+  const [isAIEdit, setIsAIEdit] = useState(false)
   const [loading, setLoading] = useState(isEdit)
   const [loadError, setLoadError] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -33,7 +34,9 @@ export default function CareerDirectionFormPage() {
       try {
         const res = await getCareerDirectionApi(id)
         if (cancelled) return
-        setInitialValues(hydrateCareerDirectionForm(res.data.careerDirection))
+        const direction = res.data.careerDirection
+        setInitialValues(hydrateCareerDirectionForm(direction))
+        setIsAIEdit(Boolean(direction.generationMetadata))
       } catch (err) {
         if (!cancelled) setLoadError({ message: err.message })
       } finally {
@@ -95,6 +98,7 @@ export default function CareerDirectionFormPage() {
         onSubmit={handleSubmit}
         submitting={submitting}
         apiError={apiError}
+        isAIEdit={isEdit && isAIEdit}
       />
     </div>
   )

@@ -6,6 +6,7 @@ import { request } from './client.js'
 //   POST   /api/career-directions                      -> { success, data: { careerDirection } }  (201)
 //   PATCH  /api/career-directions/:id                  -> { success, data: { careerDirection } }
 //   DELETE /api/career-directions/:id                  -> { success, message }
+//   POST   /api/career-directions/generate             -> { success, data: { generatedDirection, metadata } }
 
 export const listCareerDirectionsApi = (params = {}) => {
   const query = new URLSearchParams()
@@ -27,3 +28,6 @@ export const updateCareerDirectionApi = (id, data) =>
 
 export const deleteCareerDirectionApi = (id) =>
   request({ path: `/career-directions/${id}`, method: 'DELETE' })
+
+export const generateCareerDirectionApi = (data) =>
+  request({ path: '/career-directions/generate', method: 'POST', body: data })

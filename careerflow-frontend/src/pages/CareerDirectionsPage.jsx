@@ -5,6 +5,7 @@ import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import CareerDirectionCard from '../components/careerDirections/CareerDirectionCard.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { listCareerDirectionsApi, deleteCareerDirectionApi } from '../api/careerDirections.api.js'
@@ -21,6 +22,7 @@ export default function CareerDirectionsPage() {
   const [loadError, setLoadError] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,11 +65,16 @@ export default function CareerDirectionsPage() {
   }, [search, page, reloadKey])
 
   const handleDelete = async (direction) => {
-    if (!window.confirm(`Delete "${direction.title}"? This cannot be undone.`)) return
-    setDeletingId(direction._id)
+    setDeleteTarget(direction)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    setDeletingId(deleteTarget._id)
+    setDeleteTarget(null)
     setActionError(null)
     try {
-      await deleteCareerDirectionApi(direction._id)
+      await deleteCareerDirectionApi(deleteTarget._id)
       if (careerDirections.length === 1 && page > 1) {
         setPage(page - 1)
       } else {
@@ -89,7 +96,7 @@ export default function CareerDirectionsPage() {
         subtitle="Define focused career paths to tailor your job search."
         actions={
           <Button asChild>
-            <Link to="/career-directions/new">Add direction</Link>
+            <Link to="/career-directions/create">Add direction</Link>
           </Button>
         }
       />
@@ -135,7 +142,7 @@ export default function CareerDirectionsPage() {
             description="Add a career direction to start tailoring your job search."
             action={
               <Button asChild>
-                <Link to="/career-directions/new">Add direction</Link>
+                <Link to="/career-directions/create">Add direction</Link>
               </Button>
             }
           />
@@ -163,6 +170,16 @@ export default function CareerDirectionsPage() {
           onChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this career direction?"
+        description={deleteTarget ? `"${deleteTarget.title}" will be permanently deleted. This cannot be undone.` : ''}
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   )
 }

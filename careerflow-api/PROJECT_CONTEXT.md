@@ -135,3 +135,71 @@ Full regression after Phase 19: 17/17 suites green, 0 failures. Counted suites: 
 explicit assertions (452 Phases 8-18 + 157 new), plus the 6 status-based core suites
 (auth/jobs/profile/resume/applications/interviews) all pass. No business-logic regressions;
 `app.js` gained one additive mount (`/api/analytics`).
+
+## Stage 7.4 - Career Direction Flow Verification Results
+
+Scope: verify + harden the existing flow (Mode -> Input -> Validate -> Generate ->
+AI Preview -> Edit -> Confirm -> Persist -> Detail -> AI Metadata) with frontend automated
+tests, safe live behavioral runs, and a manual walkthrough. No backend feature/AI behavior,
+API contracts, or routing changed.
+
+### Production bug fixed (found by the new FE tests)
+`careerflow-frontend/src/pages/CareerDirectionCreatePage.jsx`: `validateDraft` crashed on
+mount because `draftFormState` initializes to `null` and the default parameter only guarded
+`undefined`, so `draft.title` threw. Fix: `validateDraft(draft)` with `draft ??= {}`. No other
+production logic changed; all validation behavior for real drafts is preserved.
+
+### Frontend test infrastructure (new)
+Vitest 4.1.11 + jsdom + @testing-library/react 16 + jest-dom + user-event 14 in
+`careerflow-frontend` (dedicated `vitest.config.js`, `src/test/setup.js`, `src/test/fixtures.js`).
+New `test` / `test:watch` scripts. No Playwright/Cypress/MSW.
+
+### Frontend automated tests
+`npm test` (careerflow-frontend): 5 test files, 50/50 PASS. Suites:
+- `src/api/careerDirections.api.test.js` (7) - payload boundaries (generate/create with
+  generationMetadata/list/get/update/delete), client mocked, no real HTTP.
+- `src/components/careerDirections/CareerDirectionPreview.test.jsx` (12) - content, metadata
+  block, edit/confirm/back/cancel dialogs, invalid-fields warning, confirm error.
+- `src/components/careerDirections/CareerDirectionForm.test.jsx` (5) - AI-edit hydration,
+  title edit, dirty-state gating, empty-title block, cancel.
+- `src/components/careerDirections/CareerDirectionCreatePage.test.jsx` (17) - wizard state
+  machine: manual redirect, all three AI modes, validation blocks, generate + preview,
+  generation error, regenerate dialog, edit->save->preview (metadata intact), edit block,
+  confirm -> createCareerDirectionApi with generationMetadata -> navigate to detail,
+  persistence error.
+- `src/pages/CareerDirectionDetailPage.test.jsx` (8) - loading, render, load error/retry,
+  AI Details expand/collapse, metadata fields, metadata-absent, delete flow.
+
+### Frontend lint
+`npm run lint` (careerflow-frontend): exit 0. Only pre-existing warnings in untouched
+production files (react/only-export-components); no errors, none from new test files.
+
+### Backend regression
+`npm test` (careerflow-api): 4 files, 63/63 PASS.
+
+### Live behavioral tests (isolated)
+Run with `AI_MOCK=true`, `DATABASE_NAME=careerflow_e2e_test`, dedicated server on port 5001.
+`MONGODB_URI` untouched; primary `careerflow` DB not targeted.
+- `test/test-career-direction-generation.js`: 33/33 PASS (valid generation for all 3 modes +
+  deterministic mock metadata, Zod validation 422s, auth 401, no persistence boundary writes,
+  cleanup).
+- `test/test-career-directions.js`: 38/38 PASS (create/list/get/update/delete, cross-user
+  security, migration, cleanup).
+- Post-run verification: isolated DB had 0 leftover careerdirections/resumes for test users;
+  primary `careerflow` DB had 0 test-user directions. Real Gemini provider NOT called
+  (mock-only, deterministic outputs confirmed).
+
+### Manual browser verification (walkthrough)
+Frontend Vite dev server served at `/career-directions/create` (HTTP 200 SPA entry).
+8 manual scenarios executed live against an AI_MOCK=true server on an isolated DB:
+34/34 PASS covering AI from Idea (metadata ai_from_idea + deterministic title), AI from
+Background (contextSources resume), From Role Template (template_based), validation (422 on
+missing input), Preview/Edit -> Confirm/Persist (edited title saved, AI fields +
+generationMetadata intact), Detail/AI Metadata (mode/model/requestId correct), Reload/
+Regression (refetch + list retain all data). Note: an earlier walkthrough attempt hit a stale
+pre-existing server still bound to port 5000 (created test data in the primary DB); that data
+was located and fully deleted, then the walkthrough was re-run cleanly against a dedicated
+port 5002 server with the isolated DB - 34/34 PASS with zero primary-DB footprint.
+
+### Git
+Stage 6.3/7.3/7.4 work committed together (frontend + backend). See commit for the full diff.
