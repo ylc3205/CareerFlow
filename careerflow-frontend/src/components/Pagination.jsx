@@ -18,7 +18,7 @@ export default function Pagination({ page, totalPages, total, onChange }) {
       </Button>
       <span className="font-mono tabular-nums text-sm text-muted-foreground px-2">
         Page {page} of {totalPages}
-        {typeof total === 'number' ? ` · {total} total` : ''}
+        {typeof total === 'number' ? ` · ${total} total` : ''}
       </span>
       <Button
         type="button"

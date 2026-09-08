@@ -21,7 +21,15 @@ export default function JobFormPage() {
   const [apiError, setApiError] = useState(null)
 
   useEffect(() => {
-    if (!isEdit) return
+    if (!isEdit) {
+      // Create mode always starts from a blank form. Reset here so a
+      // transition from /jobs/:id/edit to /jobs/new cannot leak the previous
+      // job's hydrated initialValues (or a stale loading/error state).
+      setInitialValues(emptyJobForm())
+      setLoading(false)
+      setLoadError(null)
+      return
+    }
     let cancelled = false
     const load = async () => {
       try {

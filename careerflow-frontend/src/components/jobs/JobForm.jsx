@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ErrorMessage from '../ErrorMessage.jsx'
 import { Button } from '../ui/button.jsx'
 import { Input } from '../ui/input.jsx'
@@ -24,6 +24,12 @@ const errorClass = "text-sm text-destructive"
 export default function JobForm({ initialValues, submitLabel = 'Save job', onSubmit, submitting, apiError }) {
   const [form, setForm] = useState(initialValues)
   const [fieldErrors, setFieldErrors] = useState({})
+
+  // Keep the form in sync when the parent swaps initialValues (e.g. navigating
+  // from an edit page back to create mode) so stale hydrated values never leak.
+  useEffect(() => {
+    setForm(initialValues)
+  }, [initialValues])
 
   const updateField = (event) => {
     const { name, value } = event.target

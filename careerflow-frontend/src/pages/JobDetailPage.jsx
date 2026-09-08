@@ -48,6 +48,23 @@ export default function JobDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
 
+  // Reset per-job state whenever the route id changes. Without this, stale
+  // match / application / error state from a previously viewed job can leak
+  // into the newly navigated job (e.g. /jobs/job-A -> /jobs/job-B).
+  useEffect(() => {
+    setJob(null)
+    setLoadError(null)
+    setLoading(true)
+    setMatch(null)
+    setMatchError(null)
+    setAnalyzing(false)
+    setSelectedCareerDirectionId(null)
+    setApplicationId(null)
+    setApplied(false)
+    setApplying(false)
+    setApplyError(null)
+  }, [id])
+
   useEffect(() => {
     let cancelled = false
     const load = async () => {

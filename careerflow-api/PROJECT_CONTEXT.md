@@ -203,3 +203,76 @@ port 5002 server with the isolated DB - 34/34 PASS with zero primary-DB footprin
 
 ### Git
 Stage 6.3/7.3/7.4 work committed together (frontend + backend). See commit for the full diff.
+
+## Stage 8 - Jobs + AI Matching Frontend Verification Results
+
+Scope: verify + harden the existing Jobs + AI Matching frontend flow with targeted Vitest/RTL
+tests, and fix confirm-provided stale-state defects found during verification. No new features,
+no Playwright/Cypress/MSW, no backend logic changes.
+
+### Production bugs fixed (found + verified by the new FE tests)
+1. `careerflow-frontend/src/pages/JobDetailPage.jsx` - per-job state (match, application,
+   errors, loading) was NOT reset when navigating between job routes, leaking stale
+   match/application/error state from a previously-viewed job. Fix: new `useEffect(() =>
+   {...}, [id])` (first effects block) that resets `job`/`loadError`/`loading`/`match`/
+   `matchError`/`analyzing`/`selectedCareerDirectionId`/`applicationId`/`applied`/`applying`/
+   `applyError` whenever the route `id` changes. Covered by the `regression: does not leak
+   stale match/application state when the route id changes` test (job_1 -> job_2 navigation
+   via a real link).
+2. `careerflow-frontend/src/pages/JobFormPage.jsx` + `src/components/jobs/JobForm.jsx` -
+   navigating from edit mode (`/jobs/:id/edit`) to create mode (`/jobs/new`) leaked the
+   previous job's hydrated values into the create form. Fix: JobFormPage gained a create-mode
+   branch in its load effect (`setInitialValues(emptyJobForm()); setLoading(false);
+   setLoadError(null)`), AND JobForm now syncs its internal form state when the
+   `initialValues` prop changes (a `useEffect(() => setForm(initialValues), [initialValues])`),
+   because JobForm's internal `useState(initialValues)` alone could not be reset after a
+   key-remount with stale props. Covered by the `create mode does not retain stale
+   initialValues after edit mode` test (edit -> /jobs/new via a real link).
+3. `careerflow-frontend/src/components/Pagination.jsx` - rendered literal `` ` · {total}
+   total` `` (missing `$` before `{total}`), so the total count displayed as literal
+   `{total} total`. Fix: `` ` · ${total} total` ``. Covered by the `shows a pagination control`
+   test (asserts exact `Page 1 of 2 · 2 total`).
+
+### Frontend automated tests
+`npm test` (careerflow-frontend): 13 files, 129/129 PASS. New/modified Stage 8 suites:
+- `src/api/jobs.api.test.js` (11) - list/get/create/update/delete/match API wrappers,
+  client mocked, no real HTTP.
+- `src/utils/jobForm.test.js` (10) - `emptyJobForm` (fresh object per call, defaults kept),
+  `hydrateJobForm` (skills array -> comma list, nested salary flattening), `buildJobPayload`
+  (trim, empty-string stripping, skills list -> array, salary object incl. default currency).
+- `src/utils/validators.test.js` (8) - required title/company, invalid source URL, valid
+  payload passes, whitespace-only rejected.
+- `src/components/jobs/JobForm.test.jsx` (10) - create/edit hydration, required-field
+  validation, URL validation, payload build, initialValues re-sync reset.
+- `src/components/jobs/JobFitAnalysis.test.jsx` (9) - score gauge, matched/missing skills,
+  strengths/weaknesses, recommendations, analyzing state, error + Try again, missing-profile
+  call-to-action, re-analyze.
+- `src/pages/JobsPage.test.jsx` (13) - loading/success/empty states, filters, debounce
+  (fake timers), pagination, delete confirm/cancel/error + last-page step-back, load error +
+  retry, add-job link. The 50 pre-existing Stage 7.4 tests are still green.
+- `src/pages/JobFormPage.test.jsx` (5) - create/edit load, create/update submit + navigate,
+  stale create-mode reset regression.
+- `src/pages/JobDetailPage.test.jsx` (15) - loading, full render (status/salary/meta/
+  description/skills/notes), load error + retry, not-found, directions selector, analyze
+  (with/without career direction + loading + error recovery), cached match, re-analyze,
+  existing application state, apply flow, edit link, id-change regression.
+
+### Frontend lint
+`npm run lint` (careerflow-frontend): exit 0. Only pre-existing warnings in untouched
+production files (react/only-export-components); none from Stage 8 files.
+
+### Frontend build
+`npm run build` (careerflow-frontend): succeeds (`vite build`, 1910 modules, dist
+index-*.js/css emitted).
+
+### Backend regression
+`npm test` (careerflow-api): 4 files, 63/63 PASS. No backend source changed in Stage 8.
+
+### Live behavioral verification
+NOT VERIFIED for Stage 8 live jobs/match E2E scripts (`test/test-jobs.js`,
+`test-job-filters.js`, `test-match.js`, `test-ai-analysis.js`): they require a server whose
+`AI_MOCK`/DB mode must be provisioned intentionally (per Stage 7.4 practice) to avoid real
+Gemini quota + primary-DB footprint. A server was detected already running on port 5000, but
+its AI_MOCK state was not confirmed, so no destructive/live scripted runs were performed.
+Frontend behavior is verified by the automated suites above; backend behavior is verified by
+the 63/63 Vitest suites (which run in isolation, no live DB).
