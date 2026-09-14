@@ -1,11 +1,37 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import cloudinary from '../config/cloudinary.js'
 import ApiError from '../utils/ApiError.js'
 
-const STORAGE_MOCK = process.env.STORAGE_MOCK === 'true'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const DEFAULT_STORAGE_DIR = path.resolve(__dirname, '../../.storage')
 
-// In-memory store for STORAGE_MOCK mode so upload → parse round-trips offline
-// (the server process retains uploaded buffers keyed by publicId).
-const mockStore = new Map()
+const isStorageMock = () => process.env.STORAGE_MOCK === 'true'
+
+const getStorageDir = () => {
+  if (process.env.STORAGE_MOCK_DIR) {
+    return path.resolve(process.env.STORAGE_MOCK_DIR)
+  }
+  return DEFAULT_STORAGE_DIR
+}
+
+const resolveStoragePath = (publicId) => {
+  if (!publicId || typeof publicId !== 'string') {
+    throw new ApiError(400, 'Invalid storage publicId')
+  }
+  if (publicId.includes('\0')) {
+    throw new ApiError(400, 'Invalid storage publicId')
+  }
+  const storageDir = getStorageDir()
+  const targetPath = path.resolve(storageDir, publicId)
+  const relative = path.relative(storageDir, targetPath)
+  if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new ApiError(400, 'Invalid storage path: traversal detected')
+  }
+  return targetPath
+}
 
 const RESUME_FOLDER = (userId) => `careerflow/resumes/${userId}`
 
@@ -36,18 +62,27 @@ const uploadBuffer = (buffer, options) =>
     stream.end(buffer)
   })
 
-// Upload the raw CV file to Cloudinary. In STORAGE_MOCK mode no network call
-// happens; a deterministic fake URL/publicId is returned instead.
+// Upload the raw CV file. In STORAGE_MOCK mode the buffer is persisted to the
+// local filesystem (.storage or STORAGE_MOCK_DIR); otherwise uploaded to Cloudinary.
 const uploadResumeFile = async (userId, file) => {
   const originalFileName = String(file.originalname || 'resume')
   const mimeType = file.mimetype || 'application/octet-stream'
   const fileSize = file.size || Buffer.byteLength(file.buffer || Buffer.alloc(0))
 
-  if (STORAGE_MOCK) {
+  if (isStorageMock()) {
     const publicId = `${RESUME_FOLDER(userId)}/${slugify(originalFileName)}-${simpleHash(
       `${userId}:${originalFileName}:${fileSize}`
     )}`
-    mockStore.set(publicId, Buffer.from(file.buffer || Buffer.alloc(0)))
+    const filePath = resolveStoragePath(publicId)
+    try {
+      await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.promises.writeFile(filePath, file.buffer || Buffer.alloc(0))
+    } catch (err) {
+      if (err instanceof ApiError) throw err
+      console.error(`[storage] Failed to write mock file ${filePath}:`, err.message)
+      throw new ApiError(500, 'Failed to save uploaded file to storage')
+    }
+
     return {
       fileUrl: `https://res.cloudinary.com/mock/raw/upload/v1/${publicId}`,
       publicId,
@@ -76,15 +111,22 @@ const uploadResumeFile = async (userId, file) => {
   }
 }
 
-// Best-effort deletion. Never throws — a Cloudinary outage must not block
+// Best-effort deletion. Never throws — a storage failure must not block
 // downstream work such as replacing a file or deleting the Resume.
 const deleteFile = async (publicId) => {
   if (!publicId) return true
-  if (STORAGE_MOCK) {
-    // Simulates a Cloudinary delete. Returns false when the asset is not known
-    // (mirrors a failed/not-found deletion) so callers can verify that a
-    // storage failure never blocks downstream Mongo work.
-    return mockStore.delete(publicId)
+  if (isStorageMock()) {
+    try {
+      const filePath = resolveStoragePath(publicId)
+      await fs.promises.unlink(filePath)
+      return true
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        return false
+      }
+      console.error(`[storage] Failed to delete mock file ${publicId}:`, err.message)
+      return false
+    }
   }
 
   try {
@@ -97,24 +139,42 @@ const deleteFile = async (publicId) => {
 }
 
 // Downloads the uploaded CV so its text can be extracted. In STORAGE_MOCK mode
-// the buffer comes from the in-memory store instead of the network.
+// the buffer is read from the filesystem; otherwise fetched via HTTP.
 const downloadResumeFile = async (fileUrl, publicId) => {
-  if (STORAGE_MOCK) {
-    const buffer = mockStore.get(publicId)
-    return buffer || Buffer.alloc(0)
+  if (isStorageMock()) {
+    const filePath = resolveStoragePath(publicId)
+    try {
+      return await fs.promises.readFile(filePath)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        throw new ApiError(404, 'Uploaded file not found')
+      }
+      throw new ApiError(422, 'Unable to read the uploaded file')
+    }
   }
 
   try {
     const res = await fetch(fileUrl)
+    if (res.status === 404) {
+      throw new ApiError(404, 'Uploaded file not found')
+    }
     if (!res.ok) throw new Error(`download failed with status ${res.status}`)
     const arrayBuffer = await res.arrayBuffer()
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
       throw new Error('empty file')
     }
     return Buffer.from(arrayBuffer)
-  } catch {
+  } catch (err) {
+    if (err instanceof ApiError) throw err
     throw new ApiError(422, 'Unable to read the uploaded file')
   }
 }
 
-export { uploadResumeFile, deleteFile, downloadResumeFile }
+export {
+  uploadResumeFile,
+  deleteFile,
+  downloadResumeFile,
+  resolveStoragePath,
+  getStorageDir,
+  DEFAULT_STORAGE_DIR,
+}
