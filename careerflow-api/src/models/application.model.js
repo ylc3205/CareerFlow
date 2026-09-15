@@ -11,11 +11,11 @@ export const APPLICATION_STATUSES = [
 
 const applicationSchema = new mongoose.Schema(
   {
+    // index: true removed — covered by the compound unique index { user, job }
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     job: {
       type: mongoose.Schema.Types.ObjectId,
@@ -29,6 +29,7 @@ const applicationSchema = new mongoose.Schema(
     },
     appliedAt: {
       type: Date,
+      default: Date.now,
     },
     coverLetter: {
       type: String,

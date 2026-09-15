@@ -135,7 +135,7 @@ const toMatchShape = (analysis) => ({
 const generateMatch = async (userId, jobId, careerDirectionId = null) => {
   validateObjectId(jobId, 'job ID')
 
-  const job = await Job.findOne({ _id: jobId, user: userId })
+  const job = await Job.findOne({ _id: jobId, user: userId, isDeleted: { $ne: true } })
   if (!job) {
     throw new ApiError(404, 'Job not found')
   }

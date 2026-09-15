@@ -177,10 +177,11 @@ const generatePreparation = async (userId, interviewId) => {
   const rawResult = await generateInterviewPreparationJSON(prompt, RESPONSE_SCHEMA)
 
   const questions = normalizePreparation(rawResult)
+  // job is NOT persisted on InterviewPreparation — it is a write-only dead field that was
+  // never read back. Job context is always derived at query time via Interview → Application → Job.
   const preparation = new InterviewPreparation({
     user: userId,
     interview: interviewId,
-    job: job._id,
     questions,
   })
 

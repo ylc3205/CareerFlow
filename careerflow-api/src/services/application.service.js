@@ -1,6 +1,9 @@
 import mongoose from 'mongoose'
 import Application, { APPLICATION_STATUSES } from '../models/application.model.js'
 import Job from '../models/job.model.js'
+import Interview from '../models/interview.model.js'
+import InterviewPreparation from '../models/interviewPreparation.model.js'
+import PracticeSession from '../models/practiceSession.model.js'
 import ApiError from '../utils/ApiError.js'
 
 // Fields populated on job when returning applications.
@@ -98,16 +101,21 @@ const createApplication = async (userId, data) => {
     throw new ApiError(400, 'Invalid job ID')
   }
 
-  // 2. Verify job exists AND belongs to the authenticated user.
-  //    A user cannot apply to another user's job.
-  const job = await Job.findOne({ _id: data.job, user: userId })
+  // 2. Verify job exists, belongs to the authenticated user, and is not deleted.
+  //    A user cannot apply to another user's job or a deleted job.
+  const job = await Job.findOne({ _id: data.job, user: userId, isDeleted: { $ne: true } })
   if (!job) {
     throw new ApiError(404, 'Job not found')
   }
 
-  // 3. Create the application
+  // 3. Create the application (auto-set appliedAt if not explicitly provided)
   try {
-    const application = await Application.create({ ...data, user: userId })
+    const payload = {
+      ...data,
+      user: userId,
+      appliedAt: data.appliedAt ? new Date(data.appliedAt) : new Date(),
+    }
+    const application = await Application.create(payload)
     return application
   } catch (err) {
     handleE11000(err)
@@ -135,13 +143,26 @@ const updateApplication = async (userId, applicationId, data) => {
 
 const deleteApplication = async (userId, applicationId) => {
   validateObjectId(applicationId)
-  const application = await Application.findOneAndDelete({
+  const application = await Application.findOne({
     _id: applicationId,
     user: userId,
   })
   if (!application) {
     throw new ApiError(404, 'Application not found')
   }
+
+  // CASCADE: Remove child Interviews and their own children (Preparation + PracticeSessions).
+  const interviews = await Interview.find({ user: userId, application: applicationId }).select('_id')
+  if (interviews.length > 0) {
+    const interviewIds = interviews.map((i) => i._id)
+    await Promise.all([
+      InterviewPreparation.deleteMany({ user: userId, interview: { $in: interviewIds } }),
+      PracticeSession.deleteMany({ user: userId, interview: { $in: interviewIds } }),
+      Interview.deleteMany({ _id: { $in: interviewIds }, user: userId }),
+    ])
+  }
+
+  await application.deleteOne()
 }
 
 export {

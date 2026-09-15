@@ -57,7 +57,7 @@ const normalizeQuery = (query = {}) => {
 const listJobs = async (userId, query = {}) => {
   const { statusFilter, searchFilter, page, limit } = normalizeQuery(query)
 
-  const filter = { user: userId }
+  const filter = { user: userId, isDeleted: { $ne: true } }
   if (statusFilter) filter.status = statusFilter
   if (searchFilter) Object.assign(filter, searchFilter)
 
@@ -80,7 +80,7 @@ const listJobs = async (userId, query = {}) => {
 
 const getJob = async (userId, jobId) => {
   validateObjectId(jobId)
-  const job = await Job.findOne({ _id: jobId, user: userId })
+  const job = await Job.findOne({ _id: jobId, user: userId, isDeleted: { $ne: true } })
   if (!job) {
     throw new ApiError(404, 'Job not found')
   }
@@ -110,7 +110,7 @@ const updateJob = async (userId, jobId, data) => {
   normalizeSourceUrl(data)
   try {
     const job = await Job.findOneAndUpdate(
-      { _id: jobId, user: userId },
+      { _id: jobId, user: userId, isDeleted: { $ne: true } },
       { $set: data, ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}) },
       { new: true, runValidators: true }
     )
@@ -126,10 +126,15 @@ const updateJob = async (userId, jobId, data) => {
 
 const deleteJob = async (userId, jobId) => {
   validateObjectId(jobId)
-  const job = await Job.findOneAndDelete({ _id: jobId, user: userId })
+  const job = await Job.findOne({ _id: jobId, user: userId, isDeleted: { $ne: true } })
   if (!job) {
     throw new ApiError(404, 'Job not found')
   }
+
+  // SOFT DELETE: Logically mark the job as deleted without removing historical records.
+  job.isDeleted = true
+  job.deletedAt = new Date()
+  await job.save()
 }
 
 export { listJobs, getJob, createJob, updateJob, deleteJob }

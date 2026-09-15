@@ -1,6 +1,8 @@
 import mongoose from 'mongoose'
 import Interview, { INTERVIEW_STATUSES } from '../models/interview.model.js'
 import Application from '../models/application.model.js'
+import InterviewPreparation from '../models/interviewPreparation.model.js'
+import PracticeSession from '../models/practiceSession.model.js'
 import Job from '../models/job.model.js'
 import ApiError from '../utils/ApiError.js'
 
@@ -166,14 +168,19 @@ const updateInterview = async (userId, interviewId, data) => {
 const deleteInterview = async (userId, interviewId) => {
   validateObjectId(interviewId, 'Invalid interview ID')
 
-  const interview = await Interview.findOneAndDelete({
-    _id: interviewId,
-    user: userId,
-  })
-
+  const interview = await Interview.findOne({ _id: interviewId, user: userId })
   if (!interview) {
     throw new ApiError(404, 'Interview not found')
   }
+
+  // CASCADE: Delete all children owned by this user before removing the Interview.
+  // This prevents orphaned PracticeSessions from being counted by analytics.
+  await Promise.all([
+    InterviewPreparation.deleteMany({ user: userId, interview: interviewId }),
+    PracticeSession.deleteMany({ user: userId, interview: interviewId }),
+  ])
+
+  await interview.deleteOne()
 }
 
 export {

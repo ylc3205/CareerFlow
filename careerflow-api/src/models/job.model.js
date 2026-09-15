@@ -42,6 +42,14 @@ const jobSchema = new mongoose.Schema(
       default: 'saved',
     },
     notes: { type: String, trim: true },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 )

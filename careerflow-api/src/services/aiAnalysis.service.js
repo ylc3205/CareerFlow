@@ -41,7 +41,7 @@ const getSummary = async (userId) => {
   }
 
   const matchedJobIds = new Set(analyses.map((a) => String(a.job?._id)))
-  const totalJobs = await Job.countDocuments({ user: userId })
+  const totalJobs = await Job.countDocuments({ user: userId, isDeleted: { $ne: true } })
   const matchedJobs = matchedJobIds.size
   const unmatchedJobs = Math.max(0, totalJobs - matchedJobs)
 

@@ -23,25 +23,22 @@ const interviewQuestionSchema = new mongoose.Schema(
 
 const interviewPreparationSchema = new mongoose.Schema(
   {
+    // User who owns this preparation. Scoped by compound unique index { user, interview }.
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
+      // index: true removed — covered by the compound unique index { user, interview }
     },
     interview: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Interview',
       required: true,
     },
-    job: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Job',
-      required: true,
-    },
+    // job removed — write-only field, never read back, never queried.
+    // Job context is always derived via Interview → Application → Job at query time.
     questions: { type: [interviewQuestionSchema], default: [] },
-    model: { type: String, default: null },
-    provider: { type: String, default: null },
+    // model / provider removed — never written, always null, never consumed by any service or frontend.
   },
   { timestamps: true }
 )

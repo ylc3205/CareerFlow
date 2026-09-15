@@ -28,11 +28,11 @@ export const GENERATION_MODES = [
 
 const careerDirectionSchema = new mongoose.Schema(
   {
+    // index: true removed — covered by the compound index { user, createdAt: -1 }
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     title: {
       type: String,
