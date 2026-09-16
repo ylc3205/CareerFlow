@@ -125,6 +125,20 @@ const run = async () => {
     skills: ['React', 'TypeScript', 'Vite'],
   }, authH(resOnly.token))
 
+  // match-profile: add profile details + create Profile-based Career Direction
+  await req('PATCH', BASE_PROFILE, {
+    skills: ['Python', 'Django', 'PostgreSQL'],
+    experience: [
+      { company: 'Tiki', position: 'Backend Intern', description: 'Built REST APIs with Python.', startDate: '2023-06-01', current: true },
+    ],
+  }, authH(profOnly.token))
+  const profDirRes = await req('POST', `${BASE}/career-directions`, {
+    title: 'Python Backend Intern',
+    baseType: 'profile',
+    focusSkills: ['Python', 'Django'],
+  }, authH(profOnly.token))
+  const profDirId = profDirRes.body.data?.careerDirection?._id
+
   // Jobs
   const mainJobRes = await req('POST', BASE_JOBS, {
     title: 'Backend Developer',
@@ -212,17 +226,23 @@ const run = async () => {
     const { status, body } = await req('POST', matchUrl(jobC), {}, authH(nodata.token))
     console.log(`  [${status}]`)
     check('expect 400', status === 400)
-    check('expect profile/resume message', body.message === 'Please create a profile or resume to use AI matching')
+    check('expect resume missing message', body.message === 'Resume not found for General / Base Resume')
   }
 
-  // ── 7. User with only Profile ────────────────────────────
-  console.log('\n[7] User with only Profile (profOnly, jobD)')
+  // ── 7. Profile-based matching via Career Direction ─────────
+  console.log('\n[7] Profile-based matching via Career Direction (profOnly, jobD)')
   {
-    const { status, body } = await req('POST', matchUrl(jobD), {}, authH(profOnly.token))
+    const { status, body } = await req('POST', matchUrl(jobD), { careerDirectionId: profDirId }, authH(profOnly.token))
     console.log(`  [${status}]`)
     check('expect 200', status === 200)
     check('expect success=true', body.success === true)
     check('expect data.match present', !!body.data?.match)
+    const schema = validateMatchSchema(body.data?.match ?? {})
+    check('directional match has all required keys', schema.hasAllKeys)
+    check('directional match arrays are all arrays', schema.arraysOk)
+    check('directional matchScore is integer 0-100', schema.scoreInt && schema.scoreRange)
+    check('careerDirectionId matches', body.data?.match?.careerDirectionId === profDirId)
+    check('candidateSourceType is profile', body.data?.match?.candidateSourceType === 'profile')
   }
 
   // ── 8. User with only Resume ─────────────────────────────

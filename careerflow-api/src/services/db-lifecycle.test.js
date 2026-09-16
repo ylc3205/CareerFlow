@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import mongoose from 'mongoose'
 import * as jobService from './job.service.js'
 import * as applicationService from './application.service.js'
+import * as interviewService from './interview.service.js'
 import * as aiAnalysisService from './aiAnalysis.service.js'
 import Job from '../models/job.model.js'
 import Application from '../models/application.model.js'
@@ -49,6 +50,7 @@ vi.mock('../models/interview.model.js', () => ({
     create: vi.fn(),
     countDocuments: vi.fn(),
     deleteOne: vi.fn(),
+    deleteMany: vi.fn(),
   },
   INTERVIEW_STATUSES: ['scheduled', 'completed', 'canceled', 'no-show'],
 }))
@@ -313,6 +315,76 @@ describe('DB Lifecycle — Job Soft Delete, Historical Retention & appliedAt', (
       })
       // AIAnalysis is NOT touched
       expect(aiAnalysisDeleteSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  // =========================================================================
+  // 6. DELETE CASCADE TESTS (APPLICATION & INTERVIEW)
+  // =========================================================================
+  describe('Delete Cascade Behavior', () => {
+    it('deleteApplication cascades to child interviews, preparations, and practice sessions', async () => {
+      const mockAppDoc = {
+        _id: appId,
+        user: userId,
+        deleteOne: vi.fn().mockResolvedValue(true),
+      }
+      Application.findOne.mockResolvedValue(mockAppDoc)
+
+      const intId1 = new mongoose.Types.ObjectId().toString()
+      const intId2 = new mongoose.Types.ObjectId().toString()
+      Interview.find.mockReturnValue({
+        select: vi.fn().mockResolvedValue([{ _id: intId1 }, { _id: intId2 }]),
+      })
+
+      await applicationService.deleteApplication(userId, appId)
+
+      expect(Application.findOne).toHaveBeenCalledWith({
+        _id: appId,
+        user: userId,
+      })
+      expect(Interview.find).toHaveBeenCalledWith({
+        user: userId,
+        application: appId,
+      })
+      expect(InterviewPreparation.deleteMany).toHaveBeenCalledWith({
+        user: userId,
+        interview: { $in: [intId1, intId2] },
+      })
+      expect(PracticeSession.deleteMany).toHaveBeenCalledWith({
+        user: userId,
+        interview: { $in: [intId1, intId2] },
+      })
+      expect(Interview.deleteMany).toHaveBeenCalledWith({
+        _id: { $in: [intId1, intId2] },
+        user: userId,
+      })
+      expect(mockAppDoc.deleteOne).toHaveBeenCalled()
+    })
+
+    it('deleteInterview cascades to child preparations and practice sessions', async () => {
+      const interviewId = new mongoose.Types.ObjectId().toString()
+      const mockIntDoc = {
+        _id: interviewId,
+        user: userId,
+        deleteOne: vi.fn().mockResolvedValue(true),
+      }
+      Interview.findOne.mockResolvedValue(mockIntDoc)
+
+      await interviewService.deleteInterview(userId, interviewId)
+
+      expect(Interview.findOne).toHaveBeenCalledWith({
+        _id: interviewId,
+        user: userId,
+      })
+      expect(InterviewPreparation.deleteMany).toHaveBeenCalledWith({
+        user: userId,
+        interview: interviewId,
+      })
+      expect(PracticeSession.deleteMany).toHaveBeenCalledWith({
+        user: userId,
+        interview: interviewId,
+      })
+      expect(mockIntDoc.deleteOne).toHaveBeenCalled()
     })
   })
 })

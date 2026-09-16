@@ -19,6 +19,7 @@ const BASE = 'http://localhost:5000/api'
 const BASE_AUTH = `${BASE}/auth`
 const BASE_JOBS = `${BASE}/jobs`
 const BASE_PROFILE = `${BASE}/profile`
+const BASE_RESUME = `${BASE}/resume`
 
 // Complexity-valid fixture password (register policy rejects weak passwords).
 const PASSWORD = 'Str0ng!pass'
@@ -90,8 +91,16 @@ const run = async () => {
   const userB = await ensureUser('aianalysis-b@example.com')
   const noData = await ensureUser('aianalysis-nodata@example.com')
 
-  // userA: add profile details (has profile data)
+  // userA: add profile details + resume fixture (has candidate data)
   await req('PATCH', BASE_PROFILE, {
+    skills: ['Node.js', 'Express.js', 'MongoDB'],
+    experience: [
+      { company: 'TechCorp', position: 'Backend Intern', description: 'Built REST APIs with Node.js.', startDate: '2023-06-01', current: true },
+    ],
+  }, authH(userA.token))
+  await req('PATCH', BASE_RESUME, {
+    title: 'Backend Developer Resume',
+    summary: 'Backend developer with Node.js and MongoDB experience.',
     skills: ['Node.js', 'Express.js', 'MongoDB'],
     experience: [
       { company: 'TechCorp', position: 'Backend Intern', description: 'Built REST APIs with Node.js.', startDate: '2023-06-01', current: true },
@@ -201,13 +210,13 @@ const run = async () => {
     check('no analysis leaked to userB (count=0)', leaked === 0)
   }
 
-  // ── 6. Missing Profile and Resume ────────────────────────
-  console.log('\n[6] Missing profile and resume (noData, jobNoData)')
+  // ── 6. Missing Resume for General Match ───────────────────
+  console.log('\n[6] Missing resume for general matching (noData, jobNoData)')
   {
     const { status, body } = await req('POST', matchUrl(jobNoData), {}, authH(noData.token))
     console.log(`  [${status}]`)
     check('expect 400', status === 400)
-    check('expect profile/resume message', body.message === 'Please create a profile or resume to use AI matching')
+    check('expect resume missing message', body.message === 'Resume not found for General / Base Resume')
 
     const count = await AIAnalysis.countDocuments({ user: noData.userId, job: jobNoData })
     check('no analysis created for missing-data user (count=0)', count === 0)

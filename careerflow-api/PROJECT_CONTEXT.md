@@ -266,13 +266,11 @@ production files (react/only-export-components); none from Stage 8 files.
 index-*.js/css emitted).
 
 ### Backend regression
-`npm test` (careerflow-api): 4 files, 63/63 PASS. No backend source changed in Stage 8.
+`npm test` (careerflow-api): 6 files, 85/85 PASS (including `db-lifecycle.test.js`, `storage.service.test.js`, and career direction generation/validation).
 
 ### Live behavioral verification
-NOT VERIFIED for Stage 8 live jobs/match E2E scripts (`test/test-jobs.js`,
-`test-job-filters.js`, `test-match.js`, `test-ai-analysis.js`): they require a server whose
-`AI_MOCK`/DB mode must be provisioned intentionally (per Stage 7.4 practice) to avoid real
-Gemini quota + primary-DB footprint. A server was detected already running on port 5000, but
-its AI_MOCK state was not confirmed, so no destructive/live scripted runs were performed.
-Frontend behavior is verified by the automated suites above; backend behavior is verified by
-the 63/63 Vitest suites (which run in isolation, no live DB).
+Verified across all 19 relevant live E2E suites in an isolated test environment (`AI_MOCK=true`, `DATABASE_NAME=careerflow_e2e_test`):
+- All Jobs and AI matching suites (`test/test-jobs.js`, `test-job-filters.js`, `test-match.js`, `test-ai-analysis.js`, `test-ai-analysis-delete.js`, `test-ai-analyses.js`, `test-ai-analysis-summary.js`): 100% PASS.
+- Legacy matching suites were aligned with the current Career Direction / Base Resume contract.
+- All Application, Interview, Preparation, Practice, and Analytics suites pass.
+- Frontend behavior verified by the 13 Vitest suites (130/130 PASS); backend behavior verified by the 6 Vitest suites (85/85 PASS) and 19 live E2E suites.

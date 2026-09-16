@@ -194,6 +194,20 @@ describe('JobDetailPage', () => {
     expect(await screen.findByLabelText('Score 88 out of 100')).toBeInTheDocument()
   })
 
+  it('renders the missing profile/resume CTA when matching returns 400 Resume not found', async () => {
+    const err = new Error('Resume not found for General / Base Resume')
+    err.status = 400
+    mocks.matchJob.mockRejectedValueOnce(err)
+    const user = userEvent.setup()
+    routerHarness('/jobs/job_1')
+    await screen.findByRole('heading', { name: 'Backend Developer' })
+    await user.click(screen.getByRole('button', { name: 'Analyze Fit' }))
+    expect(await screen.findByText(/Create your profile or upload a resume/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Go to Resume' })).toHaveAttribute('href', '/resume')
+    expect(screen.getByRole('link', { name: 'Go to Profile' })).toHaveAttribute('href', '/profile')
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
+  })
+
   it('displays a cached match on load', async () => {
     mocks.listAnalyses.mockResolvedValue({ data: { analyses: [analysisFor('job_1')] } })
     routerHarness('/jobs/job_1')

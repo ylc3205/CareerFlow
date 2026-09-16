@@ -80,7 +80,7 @@ export default function PreparationSection({ interviewId }) {
       setError({
         message: err.message,
         errors: err.errors,
-        missingProfileResume: err.status === 400 && /profile or resume/i.test(err.message || ''),
+        missingProfileResume: err.status === 400 && /profile|resume/i.test(err.message || ''),
       })
       setStatus('error')
     }

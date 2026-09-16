@@ -20,6 +20,7 @@ const BASE = 'http://localhost:5000/api'
 const BASE_AUTH = `${BASE}/auth`
 const BASE_JOBS = `${BASE}/jobs`
 const BASE_ANALYSES = `${BASE}/ai-analyses`
+const BASE_RESUME = `${BASE}/resume`
 
 const PASSWORD = 'Str0ng!pass'
 
@@ -97,6 +98,24 @@ const run = async () => {
 
   const jobA1 = await createJob(userA.token, 'Backend Developer', 'VNG')
   const jobB1 = await createJob(userB.token, 'QA Engineer', 'FPT')
+
+  // Set up resume fixtures so general matching succeeds
+  await req('PATCH', BASE_RESUME, {
+    title: 'Backend Developer Resume',
+    summary: 'Backend developer with Node.js experience.',
+    skills: ['Node.js', 'Express.js', 'MongoDB'],
+    experience: [
+      { company: 'TechCorp', position: 'Backend Intern', description: 'Built REST APIs with Node.js.', startDate: '2023-06-01', current: true },
+    ],
+  }, authH(userA.token))
+  await req('PATCH', BASE_RESUME, {
+    title: 'QA Engineer Resume',
+    summary: 'QA engineer with testing experience.',
+    skills: ['Jest', 'Cypress'],
+    experience: [
+      { company: 'FPT', position: 'QA Intern', description: 'Tested REST APIs.', startDate: '2023-06-01', current: true },
+    ],
+  }, authH(userB.token))
 
   // Persist one analysis per user.
   await matchJob(userA.token, jobA1)
