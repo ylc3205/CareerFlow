@@ -73,7 +73,7 @@ export default function CareerDirectionFormPage() {
 
   if (loadError) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
+      <div className="mx-auto w-full max-w-4xl space-y-6">
         <PageHeader title="Career Direction" subtitle="Could not load this direction." />
         <div className="flex gap-3">
           <ErrorMessage title="Could not load direction" message={loadError.message} />
@@ -86,7 +86,7 @@ export default function CareerDirectionFormPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader
         title={isEdit ? 'Edit career direction' : 'Add a career direction'}
         subtitle={isEdit ? 'Update the career direction details.' : 'Define a focused career path.'}

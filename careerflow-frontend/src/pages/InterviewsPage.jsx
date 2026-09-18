@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Video } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
@@ -7,6 +8,8 @@ import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
 import InterviewCard from '../components/interviews/InterviewCard.jsx'
 import { Button } from '../components/ui/button.jsx'
+import { Input } from '../components/ui/input.jsx'
+import { Select } from '../components/ui/select.jsx'
 import { listInterviewsApi, deleteInterviewApi } from '../api/interviews.api.js'
 import { INTERVIEW_STATUSES } from '../utils/constants.js'
 
@@ -97,20 +100,20 @@ export default function InterviewsPage() {
     <div className="space-y-6">
       <PageHeader title="Interviews" subtitle="Keep track of your upcoming and past interviews." />
 
-      <div className="flex gap-3 mb-6">
-        <input
+      <div className="flex gap-3">
+        <Input
           type="search"
-          className="flex h-9 w-full flex-1 rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           placeholder="Search by job title or company..."
           aria-label="Search interviews"
           value={searchInput}
           onChange={handleSearchChange}
+          className="flex-1"
         />
-        <select
-          className="flex h-9 w-[200px] rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+        <Select
           aria-label="Filter by status"
           value={status}
           onChange={(event) => handleStatusChange(event.target.value)}
+          className="w-[200px] sm:w-44"
         >
           <option value="">All statuses</option>
           {INTERVIEW_STATUSES.map((item) => (
@@ -118,7 +121,7 @@ export default function InterviewsPage() {
               {item}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {actionError && <ErrorMessage title="Could not delete interview" message={actionError.message} />}
@@ -147,6 +150,7 @@ export default function InterviewsPage() {
           />
         ) : (
           <EmptyState
+            icon={<Video className="h-6 w-6" />}
             title="No interviews yet"
             description="Add an interview from an application detail page to keep track of it."
             action={

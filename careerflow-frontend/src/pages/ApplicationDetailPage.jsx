@@ -41,6 +41,26 @@ export default function ApplicationDetailPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
 
+  // Reset per-application transient state whenever the route id changes.
+  // Without this, stale editing / interview modal / error state from a previously
+  // viewed application can leak into the newly navigated application.
+  useEffect(() => {
+    setApplication(null)
+    setLoadError(null)
+    setLoading(true)
+    setEditing(false)
+    setSaving(false)
+    setFormError(null)
+    setAddingInterview(false)
+    setSavingInterview(false)
+    setInterviewFormError(null)
+    setInterviews([])
+    setInterviewsLoading(false)
+    setInterviewsError(null)
+    setDeleting(false)
+    setDeleteError(null)
+  }, [id])
+
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -187,64 +207,51 @@ export default function ApplicationDetailPage() {
 
       {deleteError && <ErrorMessage title="Could not delete application" message={deleteError.message} />}
 
-      <div className="space-y-6">
-        {editing ? (
-          <ApplicationForm
-            key="edit"
-            initialValues={hydrateApplicationForm(application)}
-            submitLabel="Save changes"
-            onSubmit={handleApplicationSubmit}
-            submitting={saving}
-            apiError={formError}
-          />
-        ) : (
-          <>
+      {editing ? (
+        <ApplicationForm
+          key="edit"
+          initialValues={hydrateApplicationForm(application)}
+          submitLabel="Save changes"
+          onSubmit={handleApplicationSubmit}
+          submitting={saving}
+          apiError={formError}
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          <div className="min-w-0 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Badge variant={APPLICATION_STATUS_VARIANT[application.status] || 'default'}>
-                    {application.status}
-                  </Badge>
-                </div>
-                <ApplicationStatusTimeline status={application.status} />
-
-                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {application.appliedAt && (
-                    <div className="space-y-1">
-                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Applied</dt>
-                      <dd className="text-sm text-foreground">{formatDisplayDate(application.appliedAt)}</dd>
-                    </div>
-                  )}
+                <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
                   {job && (
-                    <div className="space-y-1">
+                    <div>
                       <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Job</dt>
-                      <dd className="text-sm text-foreground">
-                        <Link to={`/jobs/${job._id}`} className="hover:underline">
+                      <dd className="mt-0.5 text-sm text-foreground">
+                        <Link to={`/jobs/${job._id}`} className="text-primary hover:underline">
                           {job.title}
                         </Link>
                       </dd>
                     </div>
                   )}
                   {job?.company && (
-                    <div className="space-y-1">
+                    <div>
                       <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Company</dt>
-                      <dd className="text-sm text-foreground">{job.company}</dd>
+                      <dd className="mt-0.5 text-sm text-foreground">{job.company}</dd>
                     </div>
                   )}
                   {job?.location && (
-                    <div className="space-y-1">
+                    <div>
                       <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Location</dt>
-                      <dd className="text-sm text-foreground">{job.location}</dd>
+                      <dd className="mt-0.5 text-sm text-foreground">{job.location}</dd>
                     </div>
                   )}
                   {job?.sourceUrl && (
-                    <div className="space-y-1">
+                    <div>
                       <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Source URL</dt>
-                      <dd className="text-sm text-foreground">
-                        <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="hover:underline">
+                      <dd className="mt-0.5 break-all text-sm text-foreground">
+                        <a href={job.sourceUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                           {job.sourceUrl}
                         </a>
                       </dd>
@@ -253,13 +260,13 @@ export default function ApplicationDetailPage() {
                 </dl>
 
                 {application.coverLetter && (
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Cover letter:</strong> {application.coverLetter}
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">Cover letter:</strong> {application.coverLetter}
                   </p>
                 )}
                 {application.notes && (
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Notes:</strong> {application.notes}
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">Notes:</strong> {application.notes}
                   </p>
                 )}
               </CardContent>
@@ -296,12 +303,18 @@ export default function ApplicationDetailPage() {
                 {!interviewsLoading && !interviewsError && interviews.length > 0 && (
                   <ul className="space-y-3">
                     {interviews.map((interview) => (
-                      <li key={interview._id} className="flex items-center justify-between gap-4 rounded-sm border border-border bg-card p-4">
+                      <li
+                        key={interview._id}
+                        className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
+                      >
                         <div className="min-w-0 flex-1">
-                          <Link to={`/interviews/${interview._id}`} className="font-medium hover:underline">
+                          <Link
+                            to={`/interviews/${interview._id}`}
+                            className="font-semibold text-foreground hover:text-primary"
+                          >
                             {interview.title}
                           </Link>
-                          <div className="mt-1 flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+                          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                             <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>
                               {interview.status}
                             </Badge>
@@ -314,21 +327,49 @@ export default function ApplicationDetailPage() {
                 )}
               </CardContent>
             </Card>
-          </>
-        )}
+          </div>
 
-        {addingInterview && (
-          <InterviewForm
-            key="new-interview"
-            applicationId={application._id}
-            initialValues={emptyInterviewForm()}
-            submitLabel="Add interview"
-            onSubmit={handleInterviewSubmit}
-            submitting={savingInterview}
-            apiError={interviewFormError}
-          />
-        )}
-      </div>
+          <aside className="space-y-6 lg:sticky lg:top-20">
+            <Card>
+              <CardHeader>
+                <CardTitle>Status Progression</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Current stage</span>
+                  <Badge variant={APPLICATION_STATUS_VARIANT[application.status] || 'default'}>
+                    {application.status}
+                  </Badge>
+                </div>
+                <ApplicationStatusTimeline status={application.status} />
+
+                {application.appliedAt && (
+                  <dl className="space-y-3 border-t border-border pt-4">
+                    <div className="flex items-center justify-between">
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Applied</dt>
+                      <dd className="text-sm font-medium text-foreground">
+                        {formatDisplayDate(application.appliedAt)}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      )}
+
+      {addingInterview && (
+        <InterviewForm
+          key="new-interview"
+          applicationId={application._id}
+          initialValues={emptyInterviewForm()}
+          submitLabel="Add interview"
+          onSubmit={handleInterviewSubmit}
+          submitting={savingInterview}
+          apiError={interviewFormError}
+        />
+      )}
     </div>
   )
 }

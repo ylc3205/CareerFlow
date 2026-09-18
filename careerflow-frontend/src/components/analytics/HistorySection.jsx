@@ -6,6 +6,7 @@ import EmptyState from '../EmptyState.jsx'
 import Pagination from '../Pagination.jsx'
 import { Badge } from '../ui/badge.jsx'
 import { Button } from '../ui/button.jsx'
+import { Select } from '../ui/select.jsx'
 import { getAnalyticsHistoryApi } from '../../api/analytics.api.js'
 import { PRACTICE_STATUSES, PRACTICE_STATUS_LABEL, PRACTICE_STATUS_VARIANT } from '../../utils/constants.js'
 import { formatDisplayDate } from '../../utils/format.js'
@@ -53,8 +54,8 @@ export default function HistorySection() {
           <h2 className="text-lg font-semibold tracking-tight">Practice history</h2>
           <p className="mt-1 text-sm text-muted-foreground">All of your practice sessions across every interview.</p>
         </div>
-        <select
-          className="flex h-9 w-[200px] rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+        <Select
+          className="w-[200px]"
           aria-label="Filter history by status"
           value={status}
           onChange={(event) => handleStatusChange(event.target.value)}
@@ -65,7 +66,7 @@ export default function HistorySection() {
               {PRACTICE_STATUS_LABEL[item] || item}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {loading && <Loading label="Loading practice history…" />}

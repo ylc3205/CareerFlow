@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Send, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
 import ApplicationCard from '../components/applications/ApplicationCard.jsx'
+import { Input } from '../components/ui/input.jsx'
+import { Select } from '../components/ui/select.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { listApplicationsApi, deleteApplicationApi } from '../api/applications.api.js'
 import { APPLICATION_STATUSES } from '../utils/constants.js'
@@ -99,28 +102,61 @@ export default function ApplicationsPage() {
     <div className="space-y-6">
       <PageHeader title="Applications" subtitle="Track the jobs you've applied to." />
 
-      <div className="flex gap-3 mb-6">
-        <input
-          type="search"
-          className="flex h-9 w-full flex-1 rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          placeholder="Search by job title or company..."
-          aria-label="Search applications"
-          value={searchInput}
-          onChange={handleSearchChange}
-        />
-        <select
-          className="flex h-9 w-[200px] rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          aria-label="Filter by status"
-          value={status}
-          onChange={(event) => handleStatusChange(event.target.value)}
-        >
-          <option value="">All statuses</option>
-          {APPLICATION_STATUSES.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Input
+            type="search"
+            placeholder="Search by job title or company..."
+            aria-label="Search applications"
+            value={searchInput}
+            onChange={handleSearchChange}
+            className="flex-1"
+          />
+          <Select
+            aria-label="Filter by status"
+            value={status}
+            onChange={(event) => handleStatusChange(event.target.value)}
+            className="sm:w-44"
+          >
+            <option value="">All statuses</option>
+            {APPLICATION_STATUSES.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        {(searchInput || status) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {searchInput && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-xs font-medium text-primary">
+                Search: “{searchInput}”
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  aria-label="Clear search"
+                  className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </span>
+            )}
+            {status && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-xs font-medium text-primary">
+                Status: {status}
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  aria-label="Clear status"
+                  className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {actionError && <ErrorMessage title="Could not delete application" message={actionError.message} />}
@@ -149,6 +185,7 @@ export default function ApplicationsPage() {
           />
         ) : (
           <EmptyState
+            icon={<Send className="h-6 w-6" />}
             title="No applications yet"
             description="Apply to a saved job to start tracking your applications."
             action={

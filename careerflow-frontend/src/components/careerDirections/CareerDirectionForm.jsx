@@ -1,19 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import ErrorMessage from '../ErrorMessage.jsx'
 import { Button } from '../ui/button.jsx'
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card.jsx'
 import { Input } from '../ui/input.jsx'
 import { Label } from '../ui/label.jsx'
+import { Select } from '../ui/select.jsx'
 import { Textarea } from '../ui/textarea.jsx'
 import { splitList, joinList, splitLines, joinLines, deepEqual } from '../../utils/format.js'
 import CareerLevelSelector from './CareerLevelSelector.jsx'
 import FocusAreaSelector from './FocusAreaSelector.jsx'
 
 const BASE_TYPES = ['profile', 'resume']
-
-const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-const textareaClass = `${inputClass} min-h-[80px] resize-y`
-const selectClass = inputClass
-const fieldClass = "space-y-1.5"
+const fieldClass = "space-y-2"
 const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
 const errorClass = "text-sm text-destructive"
 
@@ -230,156 +228,171 @@ export default function CareerDirectionForm({
       <form className="space-y-6" onSubmit={handleSubmit} noValidate>
         {apiError && <ErrorMessage title="Could not save career direction" message={apiError.message} errors={apiError.errors} />}
 
-        <div className={fieldClass}>
-          <Label htmlFor="title">Title *</Label>
-          <Input
-            id="title"
-            name="title"
-            className={inputClass}
-            placeholder="e.g. Backend Developer"
-            maxLength={200}
-            value={form.title}
-            onChange={updateField}
-            aria-invalid={Boolean(fieldErrors.title)}
-          />
-          {fieldErrors.title && <p className={errorClass}>{fieldErrors.title}</p>}
-        </div>
-
-        <div className={fieldClass}>
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            className={textareaClass}
-            rows={4}
-            maxLength={500}
-            placeholder="Describe this career direction..."
-            value={form.description}
-            onChange={updateField}
-            aria-invalid={Boolean(fieldErrors.description)}
-          />
-          {fieldErrors.description && <p className={errorClass}>{fieldErrors.description}</p>}
-        </div>
-
-        <div className={rowClass}>
-          <div className={fieldClass}>
-            <Label htmlFor="focusSkillsText">Focus skills</Label>
-            <Input
-              id="focusSkillsText"
-              name="focusSkillsText"
-              className={inputClass}
-              placeholder="e.g. Node.js, Express, MongoDB"
-              value={form.focusSkillsText}
-              onChange={updateField}
-              aria-invalid={Boolean(fieldErrors.focusSkillsText)}
-            />
-            {fieldErrors.focusSkillsText && <p className={errorClass}>{fieldErrors.focusSkillsText}</p>}
-            <p className="text-xs text-muted-foreground">Comma-separated list</p>
-          </div>
-          <div className={fieldClass}>
-            {isAIEdit ? (
-              <>
-                <Label>Base type</Label>
-                <div className="flex h-9 items-center rounded-sm border border-border bg-muted/50 px-3 text-sm text-muted-foreground">
-                  {form.baseType}
-                </div>
-              </>
-            ) : (
-              <>
-                <Label htmlFor="baseType">Base type *</Label>
-                <select
-                  id="baseType"
-                  name="baseType"
-                  className={selectClass}
-                  value={form.baseType}
-                  onChange={updateField}
-                >
-                  {BASE_TYPES.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className={fieldClass}>
-          <Label htmlFor="targetRolesText">Target roles</Label>
-          <Input
-            id="targetRolesText"
-            name="targetRolesText"
-            className={inputClass}
-            placeholder="e.g. Senior Backend Engineer, Tech Lead"
-            value={form.targetRolesText}
-            onChange={updateField}
-            aria-invalid={Boolean(fieldErrors.targetRolesText)}
-          />
-          {fieldErrors.targetRolesText && <p className={errorClass}>{fieldErrors.targetRolesText}</p>}
-          <p className="text-xs text-muted-foreground">Comma-separated list</p>
-        </div>
-
-        {isAIEdit && (
-          <>
-            <div className={rowClass}>
-              <CareerLevelSelector
-                value={form.careerLevel}
-                onChange={(value) => setForm((prev) => ({ ...prev, careerLevel: value }))}
-                error={fieldErrors.careerLevel}
-                disabled={submitting}
-              />
-            </div>
-
-            <FocusAreaSelector
-              primaryFocus={form.primaryFocus}
-              secondaryFocus={form.secondaryFocus}
-              onPrimaryChange={(v) => setForm((prev) => ({ ...prev, primaryFocus: v }))}
-              onSecondaryChange={(v) => setForm((prev) => ({ ...prev, secondaryFocus: v }))}
-              primaryError={fieldErrors.primaryFocus}
-              secondaryError={fieldErrors.secondaryFocus}
-              disabled={submitting}
-            />
-
+        <Card>
+          <CardHeader className="border-b border-border pb-3">
+            <CardTitle>Basic information</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-5">
             <div className={fieldClass}>
-              <Label htmlFor="learningPrioritiesText">Learning priorities</Label>
-              <Textarea
-                id="learningPrioritiesText"
-                name="learningPrioritiesText"
-                className={textareaClass}
-                rows={3}
-                placeholder={"One item per line, e.g.\nSystem Design\nKubernetes\nAWS"}
-                value={form.learningPrioritiesText}
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="e.g. Backend Developer"
+                maxLength={200}
+                value={form.title}
                 onChange={updateField}
-                aria-invalid={Boolean(fieldErrors.learningPrioritiesText)}
+                aria-invalid={Boolean(fieldErrors.title)}
               />
-              {fieldErrors.learningPrioritiesText && <p className={errorClass}>{fieldErrors.learningPrioritiesText}</p>}
-              <p className="text-xs text-muted-foreground">One item per line</p>
+              {fieldErrors.title && <p className={errorClass}>{fieldErrors.title}</p>}
             </div>
 
             <div className={fieldClass}>
-              <Label>AI Rationale</Label>
-              <div className="min-h-[80px] whitespace-pre-wrap rounded-sm border border-border bg-muted/50 p-3 text-sm leading-relaxed text-muted-foreground">
-                {form.rationale || 'No rationale provided.'}
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                className="min-h-[80px] resize-y"
+                rows={4}
+                maxLength={500}
+                placeholder="Describe this career direction..."
+                value={form.description}
+                onChange={updateField}
+                aria-invalid={Boolean(fieldErrors.description)}
+              />
+              {fieldErrors.description && <p className={errorClass}>{fieldErrors.description}</p>}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-border pb-3">
+            <CardTitle>Career focus</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-5">
+            <div className={rowClass}>
+              <div className={fieldClass}>
+                <Label htmlFor="focusSkillsText">Focus skills</Label>
+                <Input
+                  id="focusSkillsText"
+                  name="focusSkillsText"
+                  placeholder="e.g. Node.js, Express, MongoDB"
+                  value={form.focusSkillsText}
+                  onChange={updateField}
+                  aria-invalid={Boolean(fieldErrors.focusSkillsText)}
+                />
+                {fieldErrors.focusSkillsText && <p className={errorClass}>{fieldErrors.focusSkillsText}</p>}
+                <p className="text-xs text-muted-foreground">Comma-separated list</p>
+              </div>
+              <div className={fieldClass}>
+                {isAIEdit ? (
+                  <>
+                    <Label>Base type</Label>
+                    <div className="flex h-9 items-center rounded-lg border border-border bg-muted/50 px-3 text-sm text-muted-foreground">
+                      {form.baseType}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Label htmlFor="baseType">Base type *</Label>
+                    <Select
+                      id="baseType"
+                      name="baseType"
+                      value={form.baseType}
+                      onChange={updateField}
+                    >
+                      {BASE_TYPES.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </Select>
+                  </>
+                )}
               </div>
             </div>
 
             <div className={fieldClass}>
-              <Label htmlFor="suggestedNextStepsText">Suggested next steps</Label>
-              <Textarea
-                id="suggestedNextStepsText"
-                name="suggestedNextStepsText"
-                className={textareaClass}
-                rows={3}
-                placeholder={"One item per line, e.g.\nComplete Node.js course\nBuild portfolio project"}
-                value={form.suggestedNextStepsText}
+              <Label htmlFor="targetRolesText">Target roles</Label>
+              <Input
+                id="targetRolesText"
+                name="targetRolesText"
+                placeholder="e.g. Senior Backend Engineer, Tech Lead"
+                value={form.targetRolesText}
                 onChange={updateField}
-                aria-invalid={Boolean(fieldErrors.suggestedNextStepsText)}
+                aria-invalid={Boolean(fieldErrors.targetRolesText)}
               />
-              {fieldErrors.suggestedNextStepsText && <p className={errorClass}>{fieldErrors.suggestedNextStepsText}</p>}
-              <p className="text-xs text-muted-foreground">One item per line</p>
+              {fieldErrors.targetRolesText && <p className={errorClass}>{fieldErrors.targetRolesText}</p>}
+              <p className="text-xs text-muted-foreground">Comma-separated list</p>
             </div>
-          </>
+          </CardContent>
+        </Card>
+
+        {isAIEdit && (
+          <Card>
+            <CardHeader className="border-b border-border pb-3">
+              <CardTitle>Learning &amp; direction</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-5 space-y-5">
+              <div className={rowClass}>
+                <CareerLevelSelector
+                  value={form.careerLevel}
+                  onChange={(value) => setForm((prev) => ({ ...prev, careerLevel: value }))}
+                  error={fieldErrors.careerLevel}
+                  disabled={submitting}
+                />
+              </div>
+
+              <FocusAreaSelector
+                primaryFocus={form.primaryFocus}
+                secondaryFocus={form.secondaryFocus}
+                onPrimaryChange={(v) => setForm((prev) => ({ ...prev, primaryFocus: v }))}
+                onSecondaryChange={(v) => setForm((prev) => ({ ...prev, secondaryFocus: v }))}
+                primaryError={fieldErrors.primaryFocus}
+                secondaryError={fieldErrors.secondaryFocus}
+                disabled={submitting}
+              />
+
+              <div className={fieldClass}>
+                <Label htmlFor="learningPrioritiesText">Learning priorities</Label>
+                <Textarea
+                  id="learningPrioritiesText"
+                  name="learningPrioritiesText"
+                  className="min-h-[72px] resize-y"
+                  rows={3}
+                  placeholder={"One item per line, e.g.\nSystem Design\nKubernetes\nAWS"}
+                  value={form.learningPrioritiesText}
+                  onChange={updateField}
+                  aria-invalid={Boolean(fieldErrors.learningPrioritiesText)}
+                />
+                {fieldErrors.learningPrioritiesText && <p className={errorClass}>{fieldErrors.learningPrioritiesText}</p>}
+                <p className="text-xs text-muted-foreground">One item per line</p>
+              </div>
+
+              <div className={fieldClass}>
+                <Label>AI Rationale</Label>
+                <div className="min-h-[80px] whitespace-pre-wrap rounded-lg border border-border bg-muted/50 p-3 text-sm leading-relaxed text-muted-foreground">
+                  {form.rationale || 'No rationale provided.'}
+                </div>
+              </div>
+
+              <div className={fieldClass}>
+                <Label htmlFor="suggestedNextStepsText">Suggested next steps</Label>
+                <Textarea
+                  id="suggestedNextStepsText"
+                  name="suggestedNextStepsText"
+                  className="min-h-[72px] resize-y"
+                  rows={3}
+                  placeholder={"One item per line, e.g.\nComplete Node.js course\nBuild portfolio project"}
+                  value={form.suggestedNextStepsText}
+                  onChange={updateField}
+                  aria-invalid={Boolean(fieldErrors.suggestedNextStepsText)}
+                />
+                {fieldErrors.suggestedNextStepsText && <p className={errorClass}>{fieldErrors.suggestedNextStepsText}</p>}
+                <p className="text-xs text-muted-foreground">One item per line</p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <div className="flex items-center gap-3 border-t border-border pt-6">

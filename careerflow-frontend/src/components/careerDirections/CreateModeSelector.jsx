@@ -27,9 +27,9 @@ const MODES = [
   },
 ]
 
-const cardClass = "relative flex flex-col h-full cursor-pointer rounded-sm border border-input bg-background p-5 transition-all hover:border-primary/50 hover:bg-primary/5 focus-within:ring-2 focus-within:ring-primary/20"
-const iconClass = "mb-3 flex h-10 w-10 items-center justify-center rounded-sm bg-primary/10 text-primary"
-const titleClass = "font-medium"
+const cardClass = "relative flex flex-col h-full cursor-pointer rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/20"
+const iconClass = "mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"
+const titleClass = "text-sm font-semibold"
 const descClass = "mt-1 text-sm text-muted-foreground"
 const selectedClass = "border-primary bg-primary/5 ring-2 ring-primary/20"
 

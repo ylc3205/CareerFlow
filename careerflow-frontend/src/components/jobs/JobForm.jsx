@@ -3,6 +3,7 @@ import ErrorMessage from '../ErrorMessage.jsx'
 import { Button } from '../ui/button.jsx'
 import { Input } from '../ui/input.jsx'
 import { Label } from '../ui/label.jsx'
+import { Select } from '../ui/select.jsx'
 import { Textarea } from '../ui/textarea.jsx'
 import { buildJobPayload } from '../../utils/jobForm.js'
 import { validateJob } from '../../utils/validators.js'
@@ -12,9 +13,6 @@ const WORKPLACE_TYPES = ['remote', 'hybrid', 'onsite']
 const JOB_STATUSES = ['saved', 'applied', 'interviewing', 'offered', 'rejected', 'closed']
 const SALARY_PERIODS = ['hourly', 'monthly', 'yearly']
 
-const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-const textareaClass = `${inputClass} min-h-[80px] resize-y`
-const selectClass = inputClass
 const fieldClass = "space-y-1.5"
 const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
 const sectionClass = "border-t border-border pt-6"
@@ -59,7 +57,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           <Input
             id="title"
             name="title"
-            className={inputClass}
             placeholder="e.g. Senior Frontend Engineer"
             maxLength={300}
             value={form.title}
@@ -73,7 +70,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           <Input
             id="company"
             name="company"
-            className={inputClass}
             placeholder="e.g. Acme Inc."
             maxLength={200}
             value={form.company}
@@ -90,7 +86,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           <Input
             id="location"
             name="location"
-            className={inputClass}
             placeholder="City, Country"
             maxLength={200}
             value={form.location}
@@ -99,50 +94,38 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         </div>
         <div className={fieldClass}>
           <Label htmlFor="status">Status</Label>
-          <select id="status" name="status" className={selectClass} value={form.status} onChange={updateField}>
+          <Select id="status" name="status" value={form.status} onChange={updateField}>
             {JOB_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
       <div className={rowClass}>
         <div className={fieldClass}>
           <Label htmlFor="employmentType">Employment type</Label>
-          <select
-            id="employmentType"
-            name="employmentType"
-            className={selectClass}
-            value={form.employmentType}
-            onChange={updateField}
-          >
+          <Select id="employmentType" name="employmentType" value={form.employmentType} onChange={updateField}>
             <option value="">Not specified</option>
             {EMPLOYMENT_TYPES.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className={fieldClass}>
           <Label htmlFor="workplaceType">Workplace type</Label>
-          <select
-            id="workplaceType"
-            name="workplaceType"
-            className={selectClass}
-            value={form.workplaceType}
-            onChange={updateField}
-          >
+          <Select id="workplaceType" name="workplaceType" value={form.workplaceType} onChange={updateField}>
             <option value="">Not specified</option>
             {WORKPLACE_TYPES.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -151,7 +134,7 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         <Textarea
           id="description"
           name="description"
-          className={textareaClass}
+          className="min-h-[80px] resize-y"
           rows={5}
           maxLength={10000}
           placeholder="Paste the job description"
@@ -165,7 +148,7 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         <Textarea
           id="requirements"
           name="requirements"
-          className={textareaClass}
+          className="min-h-[80px] resize-y"
           rows={4}
           maxLength={5000}
           value={form.requirements}
@@ -178,7 +161,7 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         <Textarea
           id="responsibilities"
           name="responsibilities"
-          className={textareaClass}
+          className="min-h-[80px] resize-y"
           rows={4}
           maxLength={5000}
           value={form.responsibilities}
@@ -191,8 +174,8 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         <Input
           id="skills"
           name="skills"
-          className={inputClass}
           placeholder="JavaScript, React, Node.js"
+          maxLength={200}
           value={form.skills}
           onChange={updateField}
         />
@@ -208,7 +191,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
               name="salaryMin"
               type="number"
               min="0"
-              className={inputClass}
               value={form.salaryMin}
               onChange={updateField}
             />
@@ -220,7 +202,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
               name="salaryMax"
               type="number"
               min="0"
-              className={inputClass}
               value={form.salaryMax}
               onChange={updateField}
             />
@@ -232,7 +213,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
             <Input
               id="salaryCurrency"
               name="salaryCurrency"
-              className={inputClass}
               maxLength={10}
               value={form.salaryCurrency}
               onChange={updateField}
@@ -240,14 +220,14 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           </div>
           <div className={fieldClass}>
             <Label htmlFor="salaryPeriod">Period</Label>
-            <select id="salaryPeriod" name="salaryPeriod" className={selectClass} value={form.salaryPeriod} onChange={updateField}>
+            <Select id="salaryPeriod" name="salaryPeriod" value={form.salaryPeriod} onChange={updateField}>
               <option value="">Not specified</option>
               {SALARY_PERIODS.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
       </section>
@@ -255,11 +235,11 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
       <div className={rowClass}>
         <div className={fieldClass}>
           <Label htmlFor="postedAt">Posted date</Label>
-          <Input id="postedAt" name="postedAt" type="date" className={inputClass} value={form.postedAt} onChange={updateField} />
+          <Input id="postedAt" name="postedAt" type="date" value={form.postedAt} onChange={updateField} />
         </div>
         <div className={fieldClass}>
           <Label htmlFor="deadline">Deadline</Label>
-          <Input id="deadline" name="deadline" type="date" className={inputClass} value={form.deadline} onChange={updateField} />
+          <Input id="deadline" name="deadline" type="date" value={form.deadline} onChange={updateField} />
         </div>
       </div>
 
@@ -269,7 +249,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           <Input
             id="source"
             name="source"
-            className={inputClass}
             placeholder="e.g. LinkedIn, Company website"
             maxLength={200}
             value={form.source}
@@ -281,7 +260,6 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
           <Input
             id="sourceUrl"
             name="sourceUrl"
-            className={inputClass}
             placeholder="https://..."
             value={form.sourceUrl}
             onChange={updateField}
@@ -296,7 +274,7 @@ export default function JobForm({ initialValues, submitLabel = 'Save job', onSub
         <Textarea
           id="notes"
           name="notes"
-          className={textareaClass}
+          className="min-h-[80px] resize-y"
           rows={3}
           maxLength={2000}
           value={form.notes}

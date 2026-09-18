@@ -24,7 +24,7 @@ export default function JobFitAnalysis({ analysis, analyzing, error, onAnalyze }
       )}
 
       {!analyzing && error && error.missingProfileResume && (
-        <div className="space-y-3 rounded-sm border border-border bg-card p-4">
+        <div className="space-y-3 rounded-xl border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">Create your profile or upload a resume to analyze your fit for this job.</p>
           <div className="flex gap-2">
             <Link to="/profile">
@@ -130,7 +130,7 @@ export default function JobFitAnalysis({ analysis, analyzing, error, onAnalyze }
       )}
 
       {!analyzing && !error && !analysis && (
-        <div className="space-y-3 rounded-sm border border-dashed border-border p-4">
+        <div className="space-y-3 rounded-xl border border-dashed border-border p-4">
           <p className="text-sm text-muted-foreground">Run a Job Fit Analysis to see how well you match this role.</p>
           <Button onClick={onAnalyze}>Analyze Fit</Button>
         </div>

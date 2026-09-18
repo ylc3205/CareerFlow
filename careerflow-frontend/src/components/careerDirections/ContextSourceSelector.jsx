@@ -18,9 +18,9 @@ const CONTEXT_SOURCES = [
   },
 ]
 
-const fieldClass = "space-y-3"
-const checkboxClass = "flex items-start gap-3 rounded-sm border border-input bg-background p-4 transition-colors hover:bg-secondary/50"
-const checkboxInputClass = "mt-1 h-4 w-4 shrink-0 rounded-sm border-input text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+const fieldClass = "space-y-2"
+const checkboxClass = "flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors shadow-sm hover:bg-secondary/50"
+const checkboxInputClass = "mt-1 h-4 w-4 shrink-0 rounded-md border-input text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 const labelClass = "flex-1 cursor-pointer"
 const titleClass = "font-medium"
 const descClass = "text-sm text-muted-foreground mt-0.5"

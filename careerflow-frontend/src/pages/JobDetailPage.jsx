@@ -6,22 +6,14 @@ import ErrorMessage from '../components/ErrorMessage.jsx'
 import { Badge } from '../components/ui/badge.jsx'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
+import { Select } from '../components/ui/select.jsx'
 import JobFitAnalysis from '../components/jobs/JobFitAnalysis.jsx'
 import ApplyAction from '../components/jobs/ApplyAction.jsx'
 import { getJobApi, deleteJobApi, matchJobApi } from '../api/jobs.api.js'
 import { listAnalysesApi } from '../api/aiAnalysis.api.js'
 import { createApplicationApi, listApplicationsApi } from '../api/applications.api.js'
 import { listCareerDirectionsApi } from '../api/careerDirections.api.js'
-import { formatDisplayDate } from '../utils/format.js'
-
-const formatSalary = (salary) => {
-  if (!salary) return null
-  const { min, max, currency = 'USD', period } = salary
-  if (min == null && max == null) return null
-  const range = min != null && max != null ? `${min}–${max}` : min != null ? `from ${min}` : `up to ${max}`
-  const suffix = period ? ` / ${period}` : ''
-  return `${currency} ${range}${suffix}`
-}
+import { formatDisplayDate, formatSalary } from '../utils/format.js'
 
 export default function JobDetailPage() {
   const { id } = useParams()
@@ -230,6 +222,17 @@ export default function JobDetailPage() {
   }
 
   const salaryText = formatSalary(job.salary)
+  const statusVariant =
+    job.status === 'interviewing'
+      ? 'warning'
+      : job.status === 'offered'
+        ? 'success'
+        : job.status === 'rejected' || job.status === 'closed'
+          ? 'destructive'
+          : job.status === 'applied'
+            ? 'primary'
+            : 'default'
+
   const metaItems = [
     job.company ? { label: 'Company', value: job.company } : null,
     job.location ? { label: 'Location', value: job.location } : null,
@@ -247,8 +250,6 @@ export default function JobDetailPage() {
         }
       : null,
   ].filter(Boolean)
-
-  const statusVariant = job.status === 'applied' || job.status === 'interviewing' || job.status === 'offered' ? 'primary' : 'default'
 
   return (
     <div className="space-y-6">
@@ -271,105 +272,124 @@ export default function JobDetailPage() {
       {applyError && <ErrorMessage title="Could not apply to this job" message={applyError.message} errors={applyError.errors} />}
       {deleteError && <ErrorMessage title="Could not delete job" message={deleteError.message} />}
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Badge variant={statusVariant}>{job.status}</Badge>
-            </div>
-            {metaItems.length > 0 && (
-              <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {metaItems.map((item) => (
-                  <div key={item.label} className="space-y-1">
-                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{item.label}</dt>
-                    <dd className="text-sm text-foreground break-all">
-                      {item.url ? (
-                        <a href={item.value} target="_blank" rel="noreferrer" className="hover:underline">
-                          {item.value}
-                        </a>
-                      ) : (
-                        item.value
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-            {job.notes && (
-              <p className="text-sm text-muted-foreground">
-                <strong>Notes:</strong> {job.notes}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="min-w-0 space-y-6">
+          {job.description && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Description</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.description}</p>
+              </CardContent>
+            </Card>
+          )}
 
-        {job.description && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{job.description}</p>
-            </CardContent>
-          </Card>
-        )}
+          {job.requirements && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Requirements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.requirements}</p>
+              </CardContent>
+            </Card>
+          )}
 
-        {job.requirements && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Requirements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{job.requirements}</p>
-            </CardContent>
-          </Card>
-        )}
+          {job.responsibilities && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Responsibilities</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.responsibilities}</p>
+              </CardContent>
+            </Card>
+          )}
 
-        {job.responsibilities && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Responsibilities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{job.responsibilities}</p>
-            </CardContent>
-          </Card>
-        )}
+          {job.skills && job.skills.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Skills</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {job.skills.map((skill) => (
+                    <Badge key={skill} variant="outline" className="rounded-full">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {job.skills && job.skills.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {job.skills.map((skill) => (
-                  <Badge key={skill} variant="outline">{skill}</Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {job.notes && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <strong className="text-foreground">Notes:</strong> {job.notes}
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardContent className="pt-0">
-            <JobFitAnalysis analysis={match} analyzing={analyzing} error={matchError} onAnalyze={handleAnalyze} />
-          </CardContent>
-        </Card>
-
-        {directions.length > 0 && (
           <Card>
             <CardContent className="pt-0">
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">Analyze fit for</label>
-                <select
+              <JobFitAnalysis analysis={match} analyzing={analyzing} error={matchError} onAnalyze={handleAnalyze} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside className="space-y-6 lg:sticky lg:top-20">
+          <Card>
+            <CardHeader>
+              <CardTitle>Job Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant={statusVariant}>{job.status}</Badge>
+              </div>
+              {metaItems.length > 0 && (
+                <dl className="space-y-3">
+                  {metaItems.map((item) => (
+                    <div key={item.label}>
+                      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {item.label}
+                      </dt>
+                      <dd className="mt-0.5 break-all text-sm text-foreground">
+                        {item.url ? (
+                          <a href={item.value} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                            {item.value}
+                          </a>
+                        ) : (
+                          item.value
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+
+          {directions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Analysis Focus</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <label className="text-sm font-medium text-foreground" htmlFor="job-fit-direction">
+                  Analyze fit for
+                </label>
+                <Select
+                  id="job-fit-direction"
                   value={selectedCareerDirectionId ?? ''}
                   onChange={(e) => setSelectedCareerDirectionId(e.target.value || null)}
                   disabled={analyzing}
-                  className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">General / Base Resume</option>
                   {directions.map((dir) => (
@@ -377,15 +397,15 @@ export default function JobDetailPage() {
                       {dir.title}
                     </option>
                   ))}
-                </select>
+                  </Select>
                 <p className="text-xs text-muted-foreground">
                   Select which version of your resume to use for this analysis. The base resume uses your full profile.
                   A career direction emphasizes specific skills and summary for that focus.
                 </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          )}
+        </aside>
       </div>
     </div>
   )

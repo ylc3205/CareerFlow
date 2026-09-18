@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
+import { ArrowRight, Loader2, PenLine, Trash2 } from 'lucide-react'
 import { Card } from '../ui/card.jsx'
 import { Badge } from '../ui/badge.jsx'
 import { Button } from '../ui/button.jsx'
-import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import EmptyState from '../EmptyState.jsx'
 import PracticeSessionView from './PracticeSessionView.jsx'
@@ -26,6 +26,28 @@ import { formatDisplayDate } from '../../utils/format.js'
 
 const answeredCountOf = (session) =>
   (session.answers || []).filter((answer) => answer && answer.evaluation).length
+
+function SessionListSkeleton({ count = 3 }) {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+                <div className="h-3 w-24 animate-pulse rounded-sm bg-muted" />
+              </div>
+              <div className="h-3 w-2/5 animate-pulse rounded-sm bg-muted" />
+              <div className="h-3 w-1/4 animate-pulse rounded-sm bg-muted" />
+            </div>
+            <div className="hidden h-8 w-20 shrink-0 animate-pulse rounded-lg bg-muted sm:block" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function PracticeSection({ interviewId }) {
   const [sessions, setSessions] = useState([])
@@ -96,35 +118,52 @@ export default function PracticeSection({ interviewId }) {
     setSessions((prev) => prev.map((item) => (item._id === updated._id ? updated : item)))
   }
 
+  const header = (
+    <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">Interview Practice</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Answer these interview questions and receive AI feedback on each answer.
+        </p>
+      </div>
+      {!loading && !loadError && !activeSession && sessions.length > 0 && (
+        <Button size="sm" disabled={creating} onClick={handleCreate}>
+          {creating ? 'Starting…' : 'Start new practice session'}
+          {!creating && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        </Button>
+      )}
+    </header>
+  )
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Loading label="Loading practice sessions…" />
-      </div>
+      <section className="space-y-6">
+        {header}
+        <div role="status">
+          <span className="sr-only">Loading practice sessions…</span>
+          <SessionListSkeleton />
+        </div>
+      </section>
     )
   }
 
   if (loadError) {
     return (
-      <div className="space-y-6">
+      <section className="space-y-6">
+        {header}
         <div className="flex gap-3">
           <ErrorMessage title="Could not load practice sessions" message={loadError.message} />
           <Button variant="outline" size="sm" onClick={() => setReloadKey((key) => key + 1)}>
             Retry
           </Button>
         </div>
-      </div>
+      </section>
     )
   }
 
   return (
     <section className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold tracking-tight">Interview Practice</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Answer the prepared questions and get AI feedback on each answer.
-        </p>
-      </header>
+      {header}
 
       {createError && (
         <ErrorMessage
@@ -142,60 +181,74 @@ export default function PracticeSection({ interviewId }) {
           onSessionUpdate={handleSessionUpdate}
           onBack={() => setActiveSession(null)}
         />
-      ) : (
-        <>
-          <div className="flex gap-2">
+      ) : sessions.length === 0 ? (
+        <EmptyState
+          icon={<PenLine className="h-6 w-6" />}
+          title="No practice sessions yet"
+          description="Practice has not started yet. Start a session to answer the prepared questions and receive AI feedback."
+          action={
             <Button disabled={creating} onClick={handleCreate}>
               {creating ? 'Starting…' : 'Start new practice session'}
             </Button>
-          </div>
-
-          {sessions.length === 0 ? (
-            <EmptyState
-              title="No practice sessions yet"
-              description="Start a session to answer the prepared questions and receive AI feedback."
-            />
-          ) : (
-            <div className="space-y-4">
-              {sessions.map((session) => {
-                const answered = answeredCountOf(session)
-                const total = (session.answers || []).length
-                return (
-                  <Card key={session._id} className="flex items-center justify-between gap-4 p-4">
+          }
+        />
+      ) : (
+        <ul className="space-y-3">
+          {sessions.map((session) => {
+            const answered = answeredCountOf(session)
+            const total = (session.answers || []).length
+            const hasScore = session.summary && session.summary.overallScore != null
+            return (
+              <li key={session._id}>
+                <Card className="p-4 transition-shadow hover:shadow-md sm:p-5">
+                  <div className="flex items-start justify-between gap-4 sm:items-center">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={PRACTICE_STATUS_VARIANT[session.status] || 'default'}>
                           {PRACTICE_STATUS_LABEL[session.status] || session.status}
                         </Badge>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {formatDisplayDate(session.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {answered}/{total} answered
-                        {session.summary && session.summary.overallScore != null
-                          ? ` · Overall ${session.summary.overallScore}`
-                          : ''}
+                      <p className="mt-2 text-sm font-medium text-foreground">
+                        {answered} of {total} questions answered
                       </p>
+                      {hasScore && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Overall score {session.summary.overallScore}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setActiveSession(session)}>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button size="sm" onClick={() => setActiveSession(session)}>
                         {session.status === 'completed'
                           ? 'View results'
                           : session.status === 'not_started'
                             ? 'Start'
                             : 'Continue'}
                       </Button>
-                      <Button variant="destructive" size="sm" disabled={deletingId === session._id} onClick={() => handleDelete(session)}>
-                        {deletingId === session._id ? 'Deleting…' : 'Delete'}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        disabled={deletingId === session._id}
+                        onClick={() => handleDelete(session)}
+                      >
+                        {deletingId === session._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        )}
+                        <span>{deletingId === session._id ? 'Deleting…' : 'Delete'}</span>
                       </Button>
                     </div>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
-        </>
+                  </div>
+                </Card>
+              </li>
+            )
+          })}
+        </ul>
       )}
     </section>
   )

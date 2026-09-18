@@ -15,10 +15,10 @@ const FOCUS_AREAS = [
   { value: 'qa', label: 'QA' },
 ]
 
-const fieldClass = "space-y-1.5"
+const fieldClass = "space-y-2"
 const errorClass = "text-sm text-destructive"
 const chipContainerClass = "flex flex-wrap gap-2"
-const chipClass = "inline-flex items-center gap-1.5 rounded-sm border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+const chipClass = "inline-flex items-center gap-1.5 rounded-lg border border-input bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 const chipSelectedClass = "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
 
 const MAX_PRIMARY = 5

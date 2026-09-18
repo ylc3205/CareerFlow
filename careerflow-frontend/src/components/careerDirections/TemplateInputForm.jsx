@@ -45,7 +45,7 @@ export default function TemplateInputForm({
         <Label htmlFor="userIdea">Guiding preference (optional)</Label>
         <Textarea
           id="userIdea"
-          className="flex min-h-[100px] w-full rounded-sm border border-input bg-transparent px-3 py-2 text-base shadow-none transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-y"
+          className="min-h-[100px] resize-y"
           placeholder="Optional: Add a preference like 'focus on cloud' or 'prefer junior level' to personalize the template."
           maxLength={MAX_IDEA_LENGTH}
           value={values.userIdea || ''}
@@ -66,7 +66,6 @@ export default function TemplateInputForm({
         <Label htmlFor="targetRole">Target role (optional)</Label>
         <Input
           id="targetRole"
-          className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
           placeholder="e.g. Backend Developer, API Engineer"
           maxLength={MAX_ROLE_LENGTH}
           value={values.targetRole || ''}

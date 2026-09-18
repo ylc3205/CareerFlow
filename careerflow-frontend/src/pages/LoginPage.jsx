@@ -48,7 +48,6 @@ export default function LoginPage() {
     }
   }
 
-  const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
   const fieldClass = "space-y-1.5"
   const errorClass = "text-sm text-destructive"
 
@@ -70,7 +69,6 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                className={inputClass}
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={handleChange}

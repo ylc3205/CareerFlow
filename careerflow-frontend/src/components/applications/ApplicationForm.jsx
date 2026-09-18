@@ -4,12 +4,10 @@ import { Button } from '../ui/button.jsx'
 import { Input } from '../ui/input.jsx'
 import { Label } from '../ui/label.jsx'
 import { Textarea } from '../ui/textarea.jsx'
+import { Select } from '../ui/select.jsx'
 import { APPLICATION_STATUSES } from '../../utils/constants.js'
 import { buildApplicationPayload } from '../../utils/applicationForm.js'
 
-const inputClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-const textareaClass = `${inputClass} min-h-[80px] resize-y`
-const selectClass = inputClass
 const fieldClass = "space-y-1.5"
 const rowClass = "grid grid-cols-1 md:grid-cols-2 gap-4"
 
@@ -37,17 +35,17 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
       <div className={rowClass}>
         <div className={fieldClass}>
           <Label htmlFor="status">Status</Label>
-          <select id="status" name="status" className={selectClass} value={form.status} onChange={updateField}>
+          <Select id="status" name="status" value={form.status} onChange={updateField}>
             {APPLICATION_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className={fieldClass}>
           <Label htmlFor="appliedAt">Applied date</Label>
-          <Input id="appliedAt" name="appliedAt" type="date" className={inputClass} value={form.appliedAt} onChange={updateField} />
+          <Input id="appliedAt" name="appliedAt" type="date" value={form.appliedAt} onChange={updateField} />
         </div>
       </div>
 
@@ -56,7 +54,6 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
         <Textarea
           id="coverLetter"
           name="coverLetter"
-          className={textareaClass}
           rows={6}
           maxLength={10000}
           value={form.coverLetter}
@@ -69,7 +66,6 @@ export default function ApplicationForm({ initialValues, submitLabel = 'Save cha
         <Textarea
           id="notes"
           name="notes"
-          className={textareaClass}
           rows={4}
           maxLength={3000}
           value={form.notes}

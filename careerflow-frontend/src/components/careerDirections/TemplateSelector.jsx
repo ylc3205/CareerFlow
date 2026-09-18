@@ -13,10 +13,10 @@ const SUGGESTED_ROLES = [
   'Software Engineer',
 ]
 
-const fieldClass = "space-y-1.5"
+const fieldClass = "space-y-2"
 const errorClass = "text-sm text-destructive"
 const suggestionClass = "flex flex-wrap gap-2 mt-2"
-const suggestionButtonClass = "rounded-sm border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+const suggestionButtonClass = "rounded-lg border border-input bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-secondary hover:text-secondary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
 export default function TemplateSelector({
   value = '',
@@ -29,7 +29,6 @@ export default function TemplateSelector({
       <Label htmlFor="templateRole">Starting role template *</Label>
       <Input
         id="templateRole"
-        className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
         placeholder="e.g. Backend Developer"
         maxLength={200}
         value={value}

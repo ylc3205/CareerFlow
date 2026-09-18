@@ -1,8 +1,10 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import { Button } from '../components/ui/button.jsx'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import CreateModeSelector from '../components/careerDirections/CreateModeSelector.jsx'
 import AIdeaInputForm from '../components/careerDirections/AIdeaInputForm.jsx'
@@ -326,7 +328,11 @@ export default function CareerDirectionCreatePage() {
               </Button>
             }
           />
-          <CreateModeSelector selectedMode={null} onSelect={handleModeSelect} />
+          <Card>
+            <CardContent className="pt-5">
+              <CreateModeSelector selectedMode={null} onSelect={handleModeSelect} />
+            </CardContent>
+          </Card>
         </div>
       )
     }
@@ -354,45 +360,53 @@ export default function CareerDirectionCreatePage() {
 
           {error && <ErrorMessage title="Generation failed" message={error.message} errors={error.errors} />}
 
-          {isIdeaMode && (
-            <AIdeaInputForm
-              values={generationInput}
-              onChange={handleInputChange}
-              errors={fieldErrors}
-              disabled={isGenerating}
-            />
-          )}
+          <Card>
+            <CardHeader className="border-b border-border pb-3">
+              <CardTitle>{isIdeaMode ? 'AI inputs' : isBackgroundMode ? 'AI inputs' : 'Template inputs'}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-5">
+              {isIdeaMode && (
+                <AIdeaInputForm
+                  values={generationInput}
+                  onChange={handleInputChange}
+                  errors={fieldErrors}
+                  disabled={isGenerating}
+                />
+              )}
 
-          {isBackgroundMode && (
-            <AIBackgroundInputForm
-              values={generationInput}
-              onChange={handleInputChange}
-              errors={fieldErrors}
-              disabled={isGenerating}
-            />
-          )}
+              {isBackgroundMode && (
+                <AIBackgroundInputForm
+                  values={generationInput}
+                  onChange={handleInputChange}
+                  errors={fieldErrors}
+                  disabled={isGenerating}
+                />
+              )}
 
-          {isTemplateMode && (
-            <TemplateInputForm
-              values={generationInput}
-              onChange={handleInputChange}
-              errors={fieldErrors}
-              disabled={isGenerating}
-            />
-          )}
+              {isTemplateMode && (
+                <TemplateInputForm
+                  values={generationInput}
+                  onChange={handleInputChange}
+                  errors={fieldErrors}
+                  disabled={isGenerating}
+                />
+              )}
 
-          <div className="flex items-center gap-3 border-t border-border pt-6">
-            <Button
-              type="button"
-              onClick={handleGenerate}
-              disabled={isGenerating}
-            >
-              {isGenerating ? 'Generating your career direction…' : 'Generate direction'}
-            </Button>
-            <Button variant="outline" onClick={handleBack} disabled={isGenerating}>
-              ← Back
-            </Button>
-          </div>
+              <div className="mt-6 flex items-center gap-3 border-t border-border pt-6">
+                <Button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Generating your career direction…' : 'Generate direction'}
+                </Button>
+                <Button variant="outline" onClick={handleBack} disabled={isGenerating}>
+                  <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                  Back
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )
     }
@@ -446,7 +460,7 @@ export default function CareerDirectionCreatePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       {renderStep()}
 
       <ConfirmDialog

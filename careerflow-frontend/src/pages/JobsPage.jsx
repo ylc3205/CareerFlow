@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Briefcase } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
@@ -110,6 +111,7 @@ export default function JobsPage() {
         status={status}
         onSearchChange={handleSearchChange}
         onStatusChange={handleStatusChange}
+        onClearFilters={clearFilters}
       />
 
       {actionError && <ErrorMessage title="Could not delete job" message={actionError.message} />}
@@ -138,7 +140,7 @@ export default function JobsPage() {
           />
         ) : (
           <EmptyState
-            icon="💼"
+            icon={<Briefcase className="h-6 w-6" />}
             title="No jobs yet"
             description="Add a job posting to start tracking your applications."
             action={
@@ -151,7 +153,7 @@ export default function JobsPage() {
       )}
 
       {!loading && !loadError && jobs.length > 0 && (
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {jobs.map((job) => (
             <JobCard key={job._id} job={job} deleting={deletingId === job._id} onDelete={handleDelete} />
           ))}

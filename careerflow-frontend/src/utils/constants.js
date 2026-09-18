@@ -34,7 +34,7 @@ export const INTERVIEW_STATUSES = ['scheduled', 'completed', 'canceled', 'no-sho
 export const INTERVIEW_STATUS_VARIANT = {
   scheduled: 'primary',
   completed: 'success',
-  canceled: 'default',
+  canceled: 'destructive',
   'no-show': 'danger',
 }
 

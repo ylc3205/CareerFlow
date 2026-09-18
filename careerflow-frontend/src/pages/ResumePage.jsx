@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { CheckCircle, CheckCircle2, FileText, Sparkles, Upload, X } from 'lucide-react'
 import {
   getResumeApi,
   updateResumeApi,
@@ -9,11 +10,16 @@ import {
   discardResumeApi,
 } from '../api/resume.api.js'
 import { getProfileApi } from '../api/profile.api.js'
-import Loading from '../components/Loading.jsx'
+import EmptyState from '../components/EmptyState.jsx'
+import ErrorMessage from '../components/ErrorMessage.jsx'
 import ListEditor from '../components/ListEditor.jsx'
+import PageHeader from '../components/PageHeader.jsx'
+import { Badge } from '../components/ui/badge.jsx'
 import { Button } from '../components/ui/button.jsx'
-import { Card, CardContent } from '../components/ui/card.jsx'
-import { Upload, FileText, X, CheckCircle } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.jsx'
+import { Input } from '../components/ui/input.jsx'
+import { Label } from '../components/ui/label.jsx'
+import { Textarea } from '../components/ui/textarea.jsx'
 import { toDateInputValue, splitList, joinList, compact, newItemId } from '../utils/format.js'
 
 // ---------------------------------------------------------------------------
@@ -149,20 +155,82 @@ const isAllowedFile = (file) => {
 // Styling constants (consistent with existing project)
 // ---------------------------------------------------------------------------
 
-const inputClass =
-  'flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
+const fieldClass = 'space-y-2'
 
-const textareaClass = `${inputClass} min-h-[80px] resize-y`
+const rowClass = 'grid grid-cols-1 gap-4 md:grid-cols-2'
 
-const labelClass = 'text-sm font-medium'
+// ---------------------------------------------------------------------------
+// Presentation helpers
+// ---------------------------------------------------------------------------
 
-const fieldClass = 'space-y-1.5'
+function SuccessBanner({ children }) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-xl border border-success/30 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
+      role="status"
+    >
+      <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span>{children}</span>
+    </div>
+  )
+}
 
-const rowClass = 'grid grid-cols-1 md:grid-cols-2 gap-4'
+function FileRow({ title, name, size }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary" aria-hidden="true">
+        <FileText className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        {title && <p className="text-xs text-muted-foreground">{title}</p>}
+        <p className="truncate text-sm font-medium">{name}</p>
+      </div>
+      {size && <p className="ml-auto shrink-0 text-xs text-muted-foreground">{size}</p>}
+    </div>
+  )
+}
 
-const sectionClass = 'border-t border-border pt-6'
-
-const sectionTitleClass = 'text-lg font-semibold tracking-tight'
+function ResumeSkeleton() {
+  return (
+    <div className="space-y-6" role="status">
+      <span className="sr-only">Loading your resume…</span>
+      <div className="space-y-6" aria-hidden="true">
+        <div className="space-y-2">
+          <div className="h-8 w-44 animate-pulse rounded-lg bg-muted" />
+          <div className="h-4 w-80 max-w-full animate-pulse rounded-md bg-muted" />
+        </div>
+        <div className="flex w-full max-w-sm gap-1 border-b border-border">
+          <div className="h-9 w-32 animate-pulse rounded-t-lg bg-muted" />
+          <div className="h-9 w-32 animate-pulse rounded-t-lg bg-muted" />
+        </div>
+        <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div className="space-y-2">
+            <div className="h-5 w-48 animate-pulse rounded-md bg-muted" />
+            <div className="h-3 w-72 max-w-full animate-pulse rounded-md bg-muted" />
+          </div>
+          <div className="space-y-4">
+            <div className="h-9 animate-pulse rounded-lg bg-muted" />
+            <div className="h-32 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+        <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div className="h-5 w-40 animate-pulse rounded-md bg-muted" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="h-9 animate-pulse rounded-lg bg-muted" />
+            <div className="h-9 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+        <div className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div className="h-5 w-36 animate-pulse rounded-md bg-muted" />
+          <div className="space-y-3">
+            <div className="h-24 animate-pulse rounded-lg bg-muted" />
+            <div className="h-9 w-36 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -170,6 +238,7 @@ const sectionTitleClass = 'text-lg font-semibold tracking-tight'
 
 export default function ResumePage() {
   // Core state
+  const [loading, setLoading] = useState(true)
   const [resume, setResume] = useState(null)
   const [activeTab, setActiveTab] = useState('manual')
   const [manualForm, setManualForm] = useState(emptyResume)
@@ -205,7 +274,7 @@ export default function ResumePage() {
         const r = res.data.resume
         setResume(r)
         setManualForm(hydrateResume(r))
-        
+
         // Initial hydration logic for Draft state
         if (r.importStatus === 'draft' && r.draft) {
           setDraftForm(hydrateResume(r.draft))
@@ -229,6 +298,8 @@ export default function ResumePage() {
           setDraftForm(emptyResume())
           setUploadViewMode('upload')
         }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
     load()
@@ -478,355 +549,419 @@ export default function ResumePage() {
   }
 
   // -----------------------------------------------------------------------
-  // Render: Resume form fields (shared between draft, manual, editor)
+  // Render: Resume form cards (shared between draft and manual)
   // -----------------------------------------------------------------------
 
-  const renderFormFields = (formState, onFieldChange, onListChange, onListItemChange) => (
-    <>
-      <div className={fieldClass}>
-        <label className={labelClass} htmlFor="title">
-          Title
-        </label>
-        <input
-          id="title"
-          name="title"
-          className={inputClass}
-          placeholder="e.g. Senior Frontend Engineer"
-          value={formState.title}
-          onChange={onFieldChange}
-        />
-      </div>
+  const renderFormCards = (formState, onFieldChange, onListChange, onListItemChange) => {
+    const skillsList = splitList(formState.skills)
+    const languagesList = splitList(formState.languages)
+    return (
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle>Resume information</CardTitle>
+            <CardDescription>Your resume title and a short professional summary.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className={fieldClass}>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="e.g. Senior Frontend Engineer"
+                value={formState.title}
+                onChange={onFieldChange}
+              />
+            </div>
+            <div className={fieldClass}>
+              <Label htmlFor="summary">Summary</Label>
+              <Textarea
+                id="summary"
+                name="summary"
+                rows={4}
+                placeholder="A short professional summary"
+                value={formState.summary}
+                onChange={onFieldChange}
+                className="min-h-[140px]"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className={fieldClass}>
-        <label className={labelClass} htmlFor="summary">
-          Summary
-        </label>
-        <textarea
-          id="summary"
-          name="summary"
-          className={textareaClass}
-          rows={4}
-          placeholder="A short professional summary"
-          value={formState.summary}
-          onChange={onFieldChange}
-        />
-      </div>
-
-      <div className={rowClass}>
-        <div className={fieldClass}>
-          <label className={labelClass} htmlFor="skills">
-            Skills
-          </label>
-          <input
-            id="skills"
-            name="skills"
-            className={inputClass}
-            placeholder="JavaScript, React, Node.js"
-            value={formState.skills}
-            onChange={onFieldChange}
-          />
-        </div>
-        <div className={fieldClass}>
-          <label className={labelClass} htmlFor="languages">
-            Languages
-          </label>
-          <input
-            id="languages"
-            name="languages"
-            className={inputClass}
-            placeholder="English, Spanish"
-            value={formState.languages}
-            onChange={onFieldChange}
-          />
-        </div>
-      </div>
-
-      <section className={sectionClass}>
-        <h2 className={sectionTitleClass}>Experience</h2>
-        <ListEditor
-          items={formState.experience}
-          onChange={(experience) => onListChange('experience', experience)}
-          addLabel="Add experience"
-          emptyLabel="No experience added yet"
-          emptyItem={{ company: '', position: '', description: '', startDate: '', endDate: '', current: false }}
-          renderItem={(item, index) => (
-            <>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Company</label>
-                  <input
-                    className={inputClass}
-                    value={item.company}
-                    onChange={(e) => onListItemChange('experience', index, { company: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Position</label>
-                  <input
-                    className={inputClass}
-                    value={item.position}
-                    onChange={(e) => onListItemChange('experience', index, { position: e.target.value })}
-                  />
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Skills &amp; languages</CardTitle>
+            <CardDescription>Keywords that describe your expertise, separated by commas.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className={rowClass}>
+              <div className={fieldClass}>
+                <Label htmlFor="skills">Skills</Label>
+                <Input
+                  id="skills"
+                  name="skills"
+                  placeholder="JavaScript, React, Node.js"
+                  value={formState.skills}
+                  onChange={onFieldChange}
+                />
+                {skillsList.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {skillsList.map((skill) => (
+                      <Badge key={skill} variant="primary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className={fieldClass}>
-                <label className={labelClass}>Description</label>
-                <textarea
-                  className={textareaClass}
-                  rows={2}
-                  value={item.description}
-                  onChange={(e) => onListItemChange('experience', index, { description: e.target.value })}
+                <Label htmlFor="languages">Languages</Label>
+                <Input
+                  id="languages"
+                  name="languages"
+                  placeholder="English, Spanish"
+                  value={formState.languages}
+                  onChange={onFieldChange}
                 />
+                {languagesList.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {languagesList.map((language) => (
+                      <Badge key={language} variant="default">
+                        {language}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Start date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.startDate}
-                    onChange={(e) => onListItemChange('experience', index, { startDate: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>End date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.endDate}
-                    disabled={item.current}
-                    onChange={(e) => onListItemChange('experience', index, { endDate: e.target.value })}
-                  />
-                </div>
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded-sm border-border text-primary focus:ring-primary"
-                    checked={item.current}
-                    onChange={(e) => onListItemChange('experience', index, { current: e.target.checked })}
-                  />
-                  I currently work here
-                </label>
-              </div>
-            </>
-          )}
-        />
-      </section>
+            </div>
+          </CardContent>
+        </Card>
 
-      <section className={sectionClass}>
-        <h2 className={sectionTitleClass}>Education</h2>
-        <ListEditor
-          items={formState.education}
-          onChange={(education) => onListChange('education', education)}
-          addLabel="Add education"
-          emptyLabel="No education added yet"
-          emptyItem={{ school: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '' }}
-          renderItem={(item, index) => (
-            <>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>School</label>
-                  <input
-                    className={inputClass}
-                    value={item.school}
-                    onChange={(e) => onListItemChange('education', index, { school: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Degree</label>
-                  <input
-                    className={inputClass}
-                    value={item.degree}
-                    onChange={(e) => onListItemChange('education', index, { degree: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Field of study</label>
-                  <input
-                    className={inputClass}
-                    value={item.fieldOfStudy}
-                    onChange={(e) => onListItemChange('education', index, { fieldOfStudy: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Start date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.startDate}
-                    onChange={(e) => onListItemChange('education', index, { startDate: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>End date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.endDate}
-                    onChange={(e) => onListItemChange('education', index, { endDate: e.target.value })}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        />
-      </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Experience</CardTitle>
+            <CardDescription>Your work history and the roles you have held.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListEditor
+              items={formState.experience}
+              onChange={(experience) => onListChange('experience', experience)}
+              addLabel="Add experience"
+              emptyLabel="No experience added yet"
+              emptyItem={{ company: '', position: '', description: '', startDate: '', endDate: '', current: false }}
+              renderItem={(item, index) => (
+                <>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`experience-company-${index}`}>Company</Label>
+                      <Input
+                        id={`experience-company-${index}`}
+                        value={item.company}
+                        onChange={(e) => onListItemChange('experience', index, { company: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`experience-position-${index}`}>Position</Label>
+                      <Input
+                        id={`experience-position-${index}`}
+                        value={item.position}
+                        onChange={(e) => onListItemChange('experience', index, { position: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className={fieldClass}>
+                    <Label htmlFor={`experience-description-${index}`}>Description</Label>
+                    <Textarea
+                      id={`experience-description-${index}`}
+                      rows={2}
+                      value={item.description}
+                      onChange={(e) => onListItemChange('experience', index, { description: e.target.value })}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`experience-start-${index}`}>Start date</Label>
+                      <Input
+                        type="date"
+                        id={`experience-start-${index}`}
+                        value={item.startDate}
+                        onChange={(e) => onListItemChange('experience', index, { startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`experience-end-${index}`}>End date</Label>
+                      <Input
+                        type="date"
+                        id={`experience-end-${index}`}
+                        value={item.endDate}
+                        disabled={item.current}
+                        onChange={(e) => onListItemChange('experience', index, { endDate: e.target.value })}
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                        checked={item.current}
+                        onChange={(e) => onListItemChange('experience', index, { current: e.target.checked })}
+                      />
+                      I currently work here
+                    </label>
+                  </div>
+                </>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-      <section className={sectionClass}>
-        <h2 className={sectionTitleClass}>Projects</h2>
-        <ListEditor
-          items={formState.projects}
-          onChange={(projects) => onListChange('projects', projects)}
-          addLabel="Add project"
-          emptyLabel="No projects added yet"
-          emptyItem={{ name: '', description: '', url: '', techStack: '' }}
-          renderItem={(item, index) => (
-            <>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Name</label>
-                  <input
-                    className={inputClass}
-                    value={item.name}
-                    onChange={(e) => onListItemChange('projects', index, { name: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>URL</label>
-                  <input
-                    className={inputClass}
-                    placeholder="https://..."
-                    value={item.url}
-                    onChange={(e) => onListItemChange('projects', index, { url: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className={fieldClass}>
-                <label className={labelClass}>Tech stack</label>
-                <input
-                  className={inputClass}
-                  placeholder="React, Vite, Node.js"
-                  value={item.techStack}
-                  onChange={(e) => onListItemChange('projects', index, { techStack: e.target.value })}
-                />
-              </div>
-              <div className={fieldClass}>
-                <label className={labelClass}>Description</label>
-                <textarea
-                  className={textareaClass}
-                  rows={2}
-                  value={item.description}
-                  onChange={(e) => onListItemChange('projects', index, { description: e.target.value })}
-                />
-              </div>
-            </>
-          )}
-        />
-      </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Education</CardTitle>
+            <CardDescription>Degrees, certifications, and academic background.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListEditor
+              items={formState.education}
+              onChange={(education) => onListChange('education', education)}
+              addLabel="Add education"
+              emptyLabel="No education added yet"
+              emptyItem={{ school: '', degree: '', fieldOfStudy: '', startDate: '', endDate: '' }}
+              renderItem={(item, index) => (
+                <>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`education-school-${index}`}>School</Label>
+                      <Input
+                        id={`education-school-${index}`}
+                        value={item.school}
+                        onChange={(e) => onListItemChange('education', index, { school: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`education-degree-${index}`}>Degree</Label>
+                      <Input
+                        id={`education-degree-${index}`}
+                        value={item.degree}
+                        onChange={(e) => onListItemChange('education', index, { degree: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`education-field-${index}`}>Field of study</Label>
+                      <Input
+                        id={`education-field-${index}`}
+                        value={item.fieldOfStudy}
+                        onChange={(e) => onListItemChange('education', index, { fieldOfStudy: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`education-start-${index}`}>Start date</Label>
+                      <Input
+                        type="date"
+                        id={`education-start-${index}`}
+                        value={item.startDate}
+                        onChange={(e) => onListItemChange('education', index, { startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`education-end-${index}`}>End date</Label>
+                      <Input
+                        type="date"
+                        id={`education-end-${index}`}
+                        value={item.endDate}
+                        onChange={(e) => onListItemChange('education', index, { endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-      <section className={sectionClass}>
-        <h2 className={sectionTitleClass}>Certifications</h2>
-        <ListEditor
-          items={formState.certifications}
-          onChange={(certifications) => onListChange('certifications', certifications)}
-          addLabel="Add certification"
-          emptyLabel="No certifications added yet"
-          emptyItem={{ name: '', issuer: '', issueDate: '', expiryDate: '', url: '' }}
-          renderItem={(item, index) => (
-            <>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Name</label>
-                  <input
-                    className={inputClass}
-                    value={item.name}
-                    onChange={(e) => onListItemChange('certifications', index, { name: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Issuer</label>
-                  <input
-                    className={inputClass}
-                    value={item.issuer}
-                    onChange={(e) => onListItemChange('certifications', index, { issuer: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className={rowClass}>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Issue date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.issueDate}
-                    onChange={(e) => onListItemChange('certifications', index, { issueDate: e.target.value })}
-                  />
-                </div>
-                <div className={fieldClass}>
-                  <label className={labelClass}>Expiry date</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={item.expiryDate}
-                    onChange={(e) => onListItemChange('certifications', index, { expiryDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className={fieldClass}>
-                <label className={labelClass}>URL</label>
-                <input
-                  className={inputClass}
-                  placeholder="https://..."
-                  value={item.url}
-                  onChange={(e) => onListItemChange('certifications', index, { url: e.target.value })}
-                />
-              </div>
-            </>
-          )}
-        />
-      </section>
-    </>
-  )
+        <Card>
+          <CardHeader>
+            <CardTitle>Projects</CardTitle>
+            <CardDescription>Notable projects, personal or professional.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListEditor
+              items={formState.projects}
+              onChange={(projects) => onListChange('projects', projects)}
+              addLabel="Add project"
+              emptyLabel="No projects added yet"
+              emptyItem={{ name: '', description: '', url: '', techStack: '' }}
+              renderItem={(item, index) => {
+                const techStackList = splitList(item.techStack)
+                return (
+                  <>
+                    <div className={rowClass}>
+                      <div className={fieldClass}>
+                        <Label htmlFor={`projects-name-${index}`}>Name</Label>
+                        <Input
+                          id={`projects-name-${index}`}
+                          value={item.name}
+                          onChange={(e) => onListItemChange('projects', index, { name: e.target.value })}
+                        />
+                      </div>
+                      <div className={fieldClass}>
+                        <Label htmlFor={`projects-url-${index}`}>URL</Label>
+                        <Input
+                          id={`projects-url-${index}`}
+                          placeholder="https://..."
+                          value={item.url}
+                          onChange={(e) => onListItemChange('projects', index, { url: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`projects-techstack-${index}`}>Tech stack</Label>
+                      <Input
+                        id={`projects-techstack-${index}`}
+                        placeholder="React, Vite, Node.js"
+                        value={item.techStack}
+                        onChange={(e) => onListItemChange('projects', index, { techStack: e.target.value })}
+                      />
+                      {techStackList.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {techStackList.map((tech) => (
+                            <Badge key={tech} variant="default">
+                              {tech}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`projects-description-${index}`}>Description</Label>
+                      <Textarea
+                        id={`projects-description-${index}`}
+                        rows={2}
+                        value={item.description}
+                        onChange={(e) => onListItemChange('projects', index, { description: e.target.value })}
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                  </>
+                )
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Certifications</CardTitle>
+            <CardDescription>Credentials, licenses, and professional certifications.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ListEditor
+              items={formState.certifications}
+              onChange={(certifications) => onListChange('certifications', certifications)}
+              addLabel="Add certification"
+              emptyLabel="No certifications added yet"
+              emptyItem={{ name: '', issuer: '', issueDate: '', expiryDate: '', url: '' }}
+              renderItem={(item, index) => (
+                <>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`certifications-name-${index}`}>Name</Label>
+                      <Input
+                        id={`certifications-name-${index}`}
+                        value={item.name}
+                        onChange={(e) => onListItemChange('certifications', index, { name: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`certifications-issuer-${index}`}>Issuer</Label>
+                      <Input
+                        id={`certifications-issuer-${index}`}
+                        value={item.issuer}
+                        onChange={(e) => onListItemChange('certifications', index, { issuer: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className={rowClass}>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`certifications-issuedate-${index}`}>Issue date</Label>
+                      <Input
+                        type="date"
+                        id={`certifications-issuedate-${index}`}
+                        value={item.issueDate}
+                        onChange={(e) => onListItemChange('certifications', index, { issueDate: e.target.value })}
+                      />
+                    </div>
+                    <div className={fieldClass}>
+                      <Label htmlFor={`certifications-expirydate-${index}`}>Expiry date</Label>
+                      <Input
+                        type="date"
+                        id={`certifications-expirydate-${index}`}
+                        value={item.expiryDate}
+                        onChange={(e) => onListItemChange('certifications', index, { expiryDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className={fieldClass}>
+                    <Label htmlFor={`certifications-url-${index}`}>URL</Label>
+                    <Input
+                      id={`certifications-url-${index}`}
+                      placeholder="https://..."
+                      value={item.url}
+                      onChange={(e) => onListItemChange('certifications', index, { url: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+            />
+          </CardContent>
+        </Card>
+      </>
+    )
+  }
 
   // -----------------------------------------------------------------------
   // Render: Tab Navigation
   // -----------------------------------------------------------------------
 
   const renderTabs = () => (
-    <div className="flex gap-1 border-b border-border mb-6" role="tablist" aria-label="Resume sections">
+    <div className="flex gap-1 border-b border-border" role="tablist" aria-label="Resume sections">
       <button
         role="tab"
         aria-selected={activeTab === 'manual'}
-        onClick={() => { clearMessages(); setActiveTab('manual'); }}
-        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-sm border-b-2 transition-colors ${
+        onClick={() => {
+          clearMessages()
+          setActiveTab('manual')
+        }}
+        className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
           activeTab === 'manual'
             ? 'border-primary text-primary'
-            : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+            : 'border-transparent text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground'
         }`}
       >
-        <FileText className="h-4 w-4" />
+        <FileText className="h-4 w-4" aria-hidden="true" />
         Manual Resume
       </button>
       <button
         role="tab"
         aria-selected={activeTab === 'upload'}
-        onClick={() => { clearMessages(); setActiveTab('upload'); }}
-        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-sm border-b-2 transition-colors ${
+        onClick={() => {
+          clearMessages()
+          setActiveTab('upload')
+        }}
+        className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
           activeTab === 'upload'
             ? 'border-primary text-primary'
-            : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+            : 'border-transparent text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground'
         }`}
       >
-        <Upload className="h-4 w-4" />
+        <Upload className="h-4 w-4" aria-hidden="true" />
         Upload CV
         {resume?.importStatus === 'draft' && (
-          <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
-            Draft
-          </span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Draft</span>
         )}
       </button>
     </div>
@@ -842,22 +977,19 @@ export default function ResumePage() {
     // Manual creation choice (no resume yet)
     if (!hasResume) {
       return (
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold tracking-tight mb-1">Start with your Profile data?</h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                Use your existing profile information as a starting point for your resume.
-              </p>
-              <div className="flex items-center gap-3">
-                <Button onClick={() => handlePrefill(true)}>Use Profile data</Button>
-                <Button variant="outline" onClick={() => handlePrefill(false)}>
-                  Start from scratch
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <EmptyState
+          icon={<FileText className="h-6 w-6" />}
+          title="Start with your Profile data?"
+          description="Use your existing profile information as a starting point for your resume."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button onClick={() => handlePrefill(true)}>Use Profile data</Button>
+              <Button variant="outline" onClick={() => handlePrefill(false)}>
+                Start from scratch
+              </Button>
+            </div>
+          }
+        />
       )
     }
 
@@ -865,38 +997,23 @@ export default function ResumePage() {
     const originalFile = resume?.originalFile
     return (
       <div className="space-y-6">
-        {error && (
-          <div className="rounded-sm border border-destructive bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="rounded-sm border border-success bg-success/10 text-success p-4" role="status">
-            {success}
-          </div>
-        )}
-
         {originalFile && (
-          <div className="flex items-center gap-3 rounded-sm border border-border bg-muted/50 p-3">
-            <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Original CV</p>
-              <p className="text-sm font-medium truncate">
-                {originalFile.originalFileName || 'Uploaded CV'}
-              </p>
-            </div>
-          </div>
+          <FileRow
+            title="Original CV"
+            name={originalFile.originalFileName || 'Uploaded CV'}
+            size={formatFileSize(originalFile.fileSize)}
+          />
         )}
 
         <form className="space-y-6" onSubmit={handleSave}>
-          {renderFormFields(
+          {renderFormCards(
             manualForm,
             updateManualField,
             (section, value) => setManualForm((prev) => ({ ...prev, [section]: value })),
-            updateManualListItem
+            updateManualListItem,
           )}
 
-          <div className="flex items-center gap-3 border-t border-border pt-6">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
             <Button type="submit" disabled={saving || isBusy}>
               {saving ? 'Saving...' : 'Save Resume'}
             </Button>
@@ -919,174 +1036,149 @@ export default function ResumePage() {
     // Upload state machine
     if (uploadViewMode === 'upload') {
       return (
-        <div className="space-y-6">
-          <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Upload your existing CV and let AI extract the details.
-              </p>
-            </div>
-          </header>
-
-          {error && (
-            <div className="rounded-sm border border-destructive bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-              {error}
-            </div>
-          )}
-
-          <Card>
-            <CardContent className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload CV</CardTitle>
+            <CardDescription>Upload your existing CV and let AI extract the details.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div
+              className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors ${
+                isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div
-                className={`flex flex-col items-center gap-4 rounded-sm border-2 border-dashed p-8 text-center transition-colors ${
-                  isDragging
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                aria-hidden="true"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-muted text-muted-foreground">
-                  <Upload className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="font-medium">Drop your CV here</p>
-                  <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  className="hidden"
-                  onChange={handleFileInput}
-                />
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                  Browse files
-                </Button>
-                <p className="text-xs text-muted-foreground">Supported: PDF, DOCX (max 10 MB)</p>
+                <Upload className="h-6 w-6" />
               </div>
+              <div>
+                <p className="font-medium text-foreground">Drop your CV here</p>
+                <p className="mt-1 text-sm text-muted-foreground">or click to browse</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={handleFileInput}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                Browse files
+              </Button>
+              <p className="text-xs text-muted-foreground">Supported: PDF, DOCX (max 10 MB)</p>
+            </div>
 
-              {selectedFile && (
-                <div className="mt-4 flex items-center justify-between rounded-sm border border-border bg-muted/50 p-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedFile(null)}
-                    className="ml-3 p-1 rounded-sm text-muted-foreground hover:bg-muted transition-colors"
-                    aria-label="Remove file"
+            {selectedFile && (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/50 p-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                    aria-hidden="true"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+                  </div>
                 </div>
-              )}
-
-              <div className="flex items-center gap-3 mt-6">
-                <Button onClick={handleUpload} disabled={!selectedFile || uploading}>
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </Button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(null)}
+                  className="ml-3 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted"
+                  aria-label="Remove file"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+
+            <Button onClick={handleUpload} disabled={!selectedFile || uploading}>
+              {uploading ? 'Uploading...' : 'Upload'}
+            </Button>
+          </CardContent>
+        </Card>
       )
     }
 
     // Uploaded state: show file info + parse action
     if (uploadViewMode === 'uploaded') {
       return (
-        <div className="space-y-6">
-          <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your CV has been uploaded. Ready to extract the details.
-              </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload CV</CardTitle>
+            <CardDescription>Your CV has been uploaded. Ready to extract the details.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+              <CheckCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+              CV uploaded successfully
             </div>
-          </header>
 
-          {error && (
-            <div className="rounded-sm border border-destructive bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-              {error}
+            {originalFile && (
+              <FileRow
+                name={originalFile.originalFileName || 'Uploaded CV'}
+                size={formatFileSize(originalFile.fileSize)}
+              />
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={handleParse} disabled={parsing}>
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                {parsing ? 'Parsing...' : 'Parse with AI'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  clearMessages()
+                  setSelectedFile(null)
+                  setUploadViewMode('upload')
+                }}
+              >
+                Upload different file
+              </Button>
             </div>
-          )}
-          {success && (
-            <div className="rounded-sm border border-success bg-success/10 text-success p-4" role="status">
-              {success}
-            </div>
-          )}
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <CheckCircle className="h-5 w-5 text-success" />
-                <span className="font-medium">CV uploaded successfully</span>
-              </div>
-
-              {originalFile && (
-                <div className="flex items-center gap-3 rounded-sm border border-border bg-muted/50 p-3 mb-6">
-                  <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {originalFile.originalFileName || 'Uploaded CV'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFileSize(originalFile.fileSize)}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <Button onClick={handleParse} disabled={parsing}>
-                  {parsing ? 'Parsing...' : 'Parse with AI'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    clearMessages()
-                    setSelectedFile(null)
-                    setUploadViewMode('upload')
-                  }}
-                >
-                  Upload different file
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
       )
     }
 
     // Parsing state
     if (uploadViewMode === 'parsing') {
       return (
-        <div className="space-y-6">
-          <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Extracting your resume details with AI.
-              </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload CV</CardTitle>
+            <CardDescription>
+              Extracting your experience, skills, education and other resume details. This may take a
+              moment.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-6 text-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary" aria-hidden="true">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <p className="text-sm font-medium text-primary">Extracting your resume details with AI.</p>
             </div>
-          </header>
-
-          <Card>
-            <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-              <Loading label="Analyzing your CV..." />
-              <p className="text-sm text-muted-foreground max-w-md">
-                Extracting your experience, skills, education and other resume details. This may take a
-                moment.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="space-y-4" aria-hidden="true">
+              <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+                <div className="h-9 animate-pulse rounded-lg bg-muted" />
+                <div className="h-24 animate-pulse rounded-lg bg-muted" />
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="h-9 animate-pulse rounded-lg bg-muted" />
+                <div className="h-9 animate-pulse rounded-lg bg-muted" />
+              </div>
+              <div className="h-28 animate-pulse rounded-lg bg-muted" />
+            </div>
+          </CardContent>
+        </Card>
       )
     }
 
@@ -1094,38 +1186,31 @@ export default function ResumePage() {
     if (uploadViewMode === 'draft') {
       return (
         <div className="space-y-6">
-          <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
+          <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+              aria-hidden="true"
+            >
+              <Sparkles className="h-4 w-4" />
+            </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-semibold tracking-tight">Upload CV</h1>
+              <p className="text-sm font-semibold text-primary">AI-generated draft</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Review and edit the information extracted from your CV before confirming it.
+                This information was extracted by AI and has not replaced your current Resume yet. Review and edit
+                below, then confirm to save.
               </p>
             </div>
-          </header>
-
-          <div className="rounded-sm border-l-2 border-primary bg-muted/50 p-4">
-            <p className="text-sm font-medium">AI-generated draft</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              This information was extracted by AI and has not replaced your current Resume yet.
-              Review and edit below, then confirm to save.
-            </p>
           </div>
 
-          {error && (
-            <div className="rounded-sm border border-destructive bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-              {error}
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleConfirm(); }}>
-            {renderFormFields(
+          <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); handleConfirm() }}>
+            {renderFormCards(
               draftForm,
               updateDraftField,
               (section, value) => setDraftForm((prev) => ({ ...prev, [section]: value })),
-              updateDraftListItem
+              updateDraftListItem,
             )}
 
-            <div className="flex items-center gap-3 border-t border-border pt-6">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
               <Button type="submit" disabled={confirming || isBusy}>
                 {confirming ? 'Confirming...' : 'Confirm Resume'}
               </Button>
@@ -1145,40 +1230,26 @@ export default function ResumePage() {
   // Render: Main
   // -----------------------------------------------------------------------
 
-  const isBusy = uploading || parsing || saving || deleting || confirming
-
-  if (activeTab === 'manual') {
-    return (
-      <div className="space-y-6">
-        <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight">Resume</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your resume powers AI matching, interview prep, and job score.
-            </p>
-          </div>
-        </header>
-
-        {renderTabs()}
-        {renderManualTab()}
-      </div>
-    )
+  if (loading) {
+    return <ResumeSkeleton />
   }
 
-  // Upload CV tab
+  const isBusy = uploading || parsing || saving || deleting || confirming
+  const subtitle =
+    activeTab === 'manual'
+      ? 'Your resume powers AI matching, interview prep, and job score.'
+      : 'Upload a CV to populate your resume with AI assistance.'
+
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between gap-4 border-b border-border pb-4 mb-6">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">Resume</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload a CV to populate your resume with AI assistance.
-          </p>
-        </div>
-      </header>
+      <PageHeader title="Resume" subtitle={subtitle} />
+
+      {error && <ErrorMessage title="Something went wrong" message={error} />}
+      {success && <SuccessBanner>{success}</SuccessBanner>}
 
       {renderTabs()}
-      {renderUploadTab()}
+
+      {activeTab === 'manual' ? renderManualTab() : renderUploadTab()}
     </div>
   )
 }

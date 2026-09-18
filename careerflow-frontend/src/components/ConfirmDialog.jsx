@@ -30,8 +30,8 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-      <div className="relative w-full max-w-md rounded-sm border border-border bg-background p-6 shadow-lg">
+      <div className="absolute inset-0 bg-slate-900/50" onClick={() => onOpenChange(false)} />
+      <div className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
         <h2 className="text-lg font-semibold">{title}</h2>
         {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
         <div className="mt-6 flex justify-end gap-3">

@@ -13,8 +13,10 @@ import { cn } from '@/utils/index.js'
 //
 // Derived states per stage:
 //   completed  -> index < currentIndex   (emerald fill + check)
-//   current    -> index === currentIndex (near-black fill + dot — high contrast)
+//   current    -> index === currentIndex (indigo fill + dot + soft ring)
 //   upcoming   -> index > currentIndex   (empty outline marker)
+//
+// Layout: vertically stacked on mobile; a horizontal progression on sm and up.
 
 export default function TheFlowLine({
   stages = [],
@@ -37,7 +39,11 @@ export default function TheFlowLine({
   }))
 
   return (
-    <ol className={cn('relative', className)} role="list" aria-label={ariaLabel}>
+    <ol
+      className={cn('relative flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-0', className)}
+      role="list"
+      aria-label={ariaLabel}
+    >
       {resolved.map((stage, index) => {
         const { status, label, meta } = stage
         const isLast = index === resolved.length - 1
@@ -45,32 +51,55 @@ export default function TheFlowLine({
         const isCompleted = status === 'completed'
 
         return (
-          <li key={stage.key} className="relative flex items-start gap-4 pb-5 last:pb-0">
+          <li
+            key={stage.key}
+            className="relative flex flex-1 items-start gap-3 pb-5 last:pb-0 sm:block sm:pb-0 sm:text-center"
+          >
             {!isLast && (
               <span
                 aria-hidden="true"
-                className="absolute left-[7px] top-4 h-full w-0 border-l-2 border-dashed border-border"
+                className="absolute left-[7px] top-4 h-[calc(100%-1rem)] w-0 border-l-2 border-dashed border-border sm:hidden"
               />
             )}
-            <span
-              aria-hidden="true"
-              className={cn(
-                'relative mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2',
-                isCompleted
-                  ? 'border-success bg-success text-success-foreground'
-                  : isCurrent
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-card'
+
+            <div className="relative flex shrink-0 items-center justify-start sm:w-full sm:justify-center">
+              {index > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-1/2 top-1/2 hidden h-0 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border sm:block"
+                />
               )}
-            >
-              {isCompleted && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
-              {isCurrent && <span className="h-1 w-1 rounded-full bg-primary-foreground" />}
-            </span>
-            <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
+              {!isLast && (
+                <span
+                  aria-hidden="true"
+                  className="absolute left-1/2 top-1/2 hidden h-0 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border sm:block"
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'relative z-10 mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 sm:mt-0 sm:h-[18px] sm:w-[18px]',
+                  isCompleted
+                    ? 'border-success bg-success text-success-foreground'
+                    : isCurrent
+                      ? 'border-primary bg-primary text-primary-foreground ring-4 ring-primary/15'
+                      : 'border-border bg-card'
+                )}
+              >
+                {isCompleted && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+                {isCurrent && <span className="h-1 w-1 rounded-full bg-primary-foreground" />}
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1 sm:mt-2">
               <span
                 className={cn(
-                  'text-sm leading-tight',
-                  isCurrent ? 'font-medium text-foreground' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                  'block text-sm leading-tight sm:text-center',
+                  isCurrent
+                    ? 'font-medium text-foreground'
+                    : isCompleted
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
                 )}
               >
                 {label}
@@ -78,7 +107,7 @@ export default function TheFlowLine({
               {meta != null && (
                 <span
                   className={cn(
-                    'shrink-0 font-mono text-sm tabular-nums',
+                    'mt-0.5 block font-mono text-xs tabular-nums sm:mt-1 sm:text-center',
                     isCurrent ? 'font-medium text-foreground' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
                   )}
                 >

@@ -1,14 +1,49 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Compass, Search, X } from 'lucide-react'
 import PageHeader from '../components/PageHeader.jsx'
-import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
 import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import CareerDirectionCard from '../components/careerDirections/CareerDirectionCard.jsx'
 import { Button } from '../components/ui/button.jsx'
+import { Input } from '../components/ui/input.jsx'
 import { listCareerDirectionsApi, deleteCareerDirectionApi } from '../api/careerDirections.api.js'
+
+function DirectionsSkeleton() {
+  return (
+    <div className="space-y-6" role="status">
+      <span className="sr-only">Loading career directions...</span>
+      <div className="space-y-4" aria-hidden="true">
+        <div className="h-9 w-72 max-w-full animate-pulse rounded-lg bg-muted" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {[0, 1, 2, 3].map((item) => (
+            <div key={item} className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+              <div className="flex gap-2">
+                <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                <div className="h-5 w-12 animate-pulse rounded-full bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-48 max-w-full animate-pulse rounded-md bg-muted" />
+                <div className="h-3 w-64 max-w-full animate-pulse rounded-md bg-muted" />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[0, 1, 2].map((chip) => (
+                  <div key={chip} className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+                ))}
+              </div>
+              <div className="flex justify-end gap-1 border-t border-border pt-3">
+                <div className="h-8 w-12 animate-pulse rounded-lg bg-muted" />
+                <div className="h-8 w-12 animate-pulse rounded-lg bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function CareerDirectionsPage() {
   const [searchInput, setSearchInput] = useState('')
@@ -96,24 +131,48 @@ export default function CareerDirectionsPage() {
         subtitle="Define focused career paths to tailor your job search."
         actions={
           <Button asChild>
-            <Link to="/career-directions/create">Add direction</Link>
+            <Link to="/career-directions/create">Create career direction</Link>
           </Button>
         }
       />
 
-      <div className="relative max-w-sm">
-        <input
-          type="text"
-          placeholder="Search directions..."
-          value={searchInput}
-          onChange={handleSearchChange}
-          className="flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
-        />
+      <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            placeholder="Search directions..."
+            aria-label="Search directions"
+            value={searchInput}
+            onChange={handleSearchChange}
+            className="pl-9"
+          />
+        </div>
+        {hasFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-xs font-medium text-primary">
+              Search: “{search}”
+              <button
+                type="button"
+                onClick={clearFilters}
+                aria-label="Clear search"
+                className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
+              >
+                <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            </span>
+          </div>
+        )}
       </div>
 
-      {actionError && <ErrorMessage title="Could not delete direction" message={actionError.message} />}
+      {actionError && (
+        <ErrorMessage title="Could not delete direction" message={actionError.message} />
+      )}
 
-      {loading && <Loading label="Loading career directions..." />}
+      {loading && <DirectionsSkeleton />}
 
       {!loading && loadError && (
         <div className="flex gap-3">
@@ -137,12 +196,12 @@ export default function CareerDirectionsPage() {
           />
         ) : (
           <EmptyState
-            icon="🧭"
+            icon={<Compass className="h-6 w-6" aria-hidden="true" />}
             title="No career directions yet"
             description="Add a career direction to start tailoring your job search."
             action={
               <Button asChild>
-                <Link to="/career-directions/create">Add direction</Link>
+                <Link to="/career-directions/create">Create career direction</Link>
               </Button>
             }
           />
@@ -150,7 +209,7 @@ export default function CareerDirectionsPage() {
       )}
 
       {!loading && !loadError && careerDirections.length > 0 && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {careerDirections.map((direction) => (
             <CareerDirectionCard
               key={direction._id}

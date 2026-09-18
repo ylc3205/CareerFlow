@@ -80,8 +80,8 @@ export default function CareerDirectionPreview({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 rounded-sm border border-primary/50 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+      <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
           <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
           AI Generated Draft
         </span>
@@ -89,7 +89,7 @@ export default function CareerDirectionPreview({
       </div>
 
       {invalidFields.length > 0 && (
-        <div className="rounded-sm border border-warning bg-warning/10 p-4 text-sm text-warning">
+        <div className="rounded-xl border border-warning bg-warning/10 p-4 text-sm text-warning">
           <p className="font-medium">Some fields have issues that should be fixed:</p>
           <ul className="mt-2 list-disc list-inside space-y-1">
             {invalidFields.map((field) => (
@@ -115,7 +115,7 @@ export default function CareerDirectionPreview({
             </div>
           )}
 
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-1">
               <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Career Level</dt>
               <dd className="text-sm text-foreground">{careerLevelLabel(draft.careerLevel)}</dd>
@@ -201,9 +201,9 @@ export default function CareerDirectionPreview({
           )}
 
           {draft.rationale && (
-            <div className="space-y-1.5 rounded-sm border border-border bg-muted/50 p-4">
+            <div className="space-y-1.5 rounded-xl border border-primary/10 bg-primary/[0.03] p-4">
               <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3" aria-hidden="true" />
+                <Sparkles className="h-3 w-3 text-primary" aria-hidden="true" />
                 AI Rationale
               </h4>
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{draft.rationale}</p>
@@ -211,7 +211,7 @@ export default function CareerDirectionPreview({
           )}
 
           {metadata && (
-            <div className="rounded-sm border border-border bg-muted/50 p-4 text-xs text-muted-foreground">
+            <div className="rounded-xl border border-border bg-muted/50 p-4 text-xs text-muted-foreground">
               <p><strong>Generation Mode:</strong> {metadata.mode}</p>
               {metadata.userIdea && (
                 <p>
@@ -231,7 +231,7 @@ export default function CareerDirectionPreview({
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-3 border-t border-border pt-6">
+      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
         <Button variant="outline" onClick={onBackToInput} disabled={isConfirming}>
           <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Back to Inputs
@@ -255,7 +255,7 @@ export default function CareerDirectionPreview({
       </div>
 
       {confirmError && (
-        <div className="rounded-sm border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
           {confirmError.message}
           {confirmError.errors && (
             <ul className="mt-2 list-disc list-inside space-y-1">

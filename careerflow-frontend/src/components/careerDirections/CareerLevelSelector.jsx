@@ -1,4 +1,5 @@
 import { Label } from '../ui/label.jsx'
+import { Select } from '../ui/select.jsx'
 
 const CAREER_LEVELS = [
   { value: 'intern', label: 'Intern' },
@@ -8,17 +9,15 @@ const CAREER_LEVELS = [
   { value: 'unspecified', label: 'Not specified' },
 ]
 
-const selectClass = "flex h-9 w-full rounded-sm border border-input bg-transparent px-3 py-1 text-base shadow-none transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-const fieldClass = "space-y-1.5"
+const fieldClass = "space-y-2"
 const errorClass = "text-sm text-destructive"
 
 export default function CareerLevelSelector({ value, onChange, error, label = 'Career level', required = false, disabled = false }) {
   return (
     <div className={fieldClass}>
       <Label htmlFor="careerLevel">{label}{required && ' *'}</Label>
-      <select
+      <Select
         id="careerLevel"
-        className={selectClass}
         value={value || 'unspecified'}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
@@ -29,7 +28,7 @@ export default function CareerLevelSelector({ value, onChange, error, label = 'C
             {level.label}
           </option>
         ))}
-      </select>
+      </Select>
       {error && <p className={errorClass}>{error}</p>}
     </div>
   )

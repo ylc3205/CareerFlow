@@ -39,6 +39,16 @@ export const formatDisplayDate = (value) => {
   })
 }
 
+// Format a job salary range, e.g. "USD 1500–2500 / monthly".
+export const formatSalary = (salary) => {
+  if (!salary) return null
+  const { min, max, currency = 'USD', period } = salary
+  if (min == null && max == null) return null
+  const range = min != null && max != null ? `${min}–${max}` : min != null ? `from ${min}` : `up to ${max}`
+  const suffix = period ? ` / ${period}` : ''
+  return `${currency} ${range}${suffix}`
+}
+
 // Parse a comma-separated string into a trimmed, non-empty array.
 export const splitList = (value) =>
   String(value || '')

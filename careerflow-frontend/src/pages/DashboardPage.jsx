@@ -23,6 +23,10 @@ import { listInterviewsApi } from '../api/interviews.api.js'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { Badge } from '../components/ui/badge.jsx'
+import { cn } from '../utils/index.js'
+import PageHeader from '../components/PageHeader.jsx'
+import EmptyState from '../components/EmptyState.jsx'
+import ScoreGauge from '../components/ScoreGauge.jsx'
 import TheFlowLine from '../components/interviews/TheFlowLine.jsx'
 import { APPLICATION_PROGRESS } from '../utils/constants.js'
 import { formatDisplayDate } from '../utils/format.js'
@@ -46,15 +50,19 @@ function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <div className="h-3 w-16 animate-pulse rounded-sm bg-muted" />
+        <div className="h-4 w-24 animate-pulse rounded-sm bg-muted" />
         <div className="h-8 w-72 animate-pulse rounded-sm bg-muted" />
         <div className="h-4 w-full max-w-md animate-pulse rounded-sm bg-muted" />
       </div>
-      <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="h-56 animate-pulse rounded-sm border border-border bg-card lg:col-span-2" />
-        <div className="h-56 animate-pulse rounded-sm border border-border bg-card" />
-        <div className="h-64 animate-pulse rounded-sm border border-border bg-card lg:col-span-2" />
-        <div className="h-64 animate-pulse rounded-sm border border-border bg-card" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="h-28 animate-pulse rounded-xl border border-border bg-card shadow-sm" />
+        ))}
+      </div>
+      <div className="h-40 animate-pulse rounded-xl border border-border bg-card shadow-sm" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="h-72 animate-pulse rounded-xl border border-border bg-card shadow-sm" />
+        <div className="h-72 animate-pulse rounded-xl border border-border bg-card shadow-sm" />
       </div>
     </div>
   )
@@ -160,82 +168,114 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Dashboard</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">Career Command Center</h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Your pipeline at a glance{user?.email ? ` — signed in as ${user.email}` : ''}.
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <Button asChild>
-            <Link to="/jobs">
-              <Briefcase />
-              Browse jobs
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/analytics">
-              <BarChart3 />
-              View analytics
-            </Link>
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title="Career Command Center"
+        subtitle={`Your pipeline at a glance${user?.email ? ` — signed in as ${user.email}` : ''}.`}
+        actions={
+          <>
+            <Button asChild>
+              <Link to="/jobs">
+                <Briefcase />
+                Browse jobs
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/analytics">
+                <BarChart3 />
+                View analytics
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
-      <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Career metrics</CardTitle>
-            <CardDescription>Your current positions across jobs, applications, interviews, and offers.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-              {metrics.map((metric) => (
-                <div key={metric.key}>
-                  <div className="flex items-center gap-2">
-                    <metric.icon
-                      className={metric.accent ? 'h-3.5 w-3.5 text-success' : 'h-3.5 w-3.5 text-muted-foreground'}
-                    />
-                    <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {metric.label}
-                    </span>
-                  </div>
-                  <div
-                    className={
-                      metric.accent && metric.value > 0
-                        ? 'mt-2 font-mono text-3xl leading-none tabular-nums text-success'
-                        : 'mt-2 font-mono text-3xl leading-none tabular-nums'
-                    }
-                  >
-                    {metric.value ?? '—'}
-                  </div>
-                </div>
-              ))}
+      <section aria-label="Career summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <Card key={metric.key} className="transition-shadow hover:shadow-md">
+            <CardContent className="flex items-start justify-between gap-4 p-5">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{metric.label}</p>
+                <p
+                  className={cn(
+                    'mt-2 truncate font-mono text-3xl leading-none tabular-nums',
+                    metric.accent && metric.value > 0 && 'text-success'
+                  )}
+                >
+                  {metric.value ?? '—'}
+                </p>
+              </div>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                  metric.accent && metric.value > 0 ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'
+                )}
+              >
+                <metric.icon className="h-5 w-5" />
+              </span>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
+      <Card>
+        <CardHeader className="flex-row items-start justify-between space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle>Application pipeline</CardTitle>
+            <CardDescription>Where your applications stand right now.</CardDescription>
+          </div>
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+            <Link to="/applications">
+              View all
+              <ArrowRight />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {hasApplications ? (
+            <div className="space-y-4">
+              <TheFlowLine stages={flowStages} currentKey={currentKey} ariaLabel="Application pipeline" />
+              {terminal > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {terminal} application{terminal > 1 ? 's' : ''} in a closed state (rejected or withdrawn).
+                </p>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <EmptyState
+              icon={<Send className="h-6 w-6" />}
+              title="No applications yet"
+              description="Apply to a job to start building your pipeline."
+              action={
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/jobs">Browse jobs</Link>
+                </Button>
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
 
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Next interview</CardTitle>
+            <CardTitle>Upcoming interview</CardTitle>
           </CardHeader>
           <CardContent>
             {nextInterview ? (
               <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="success">Scheduled</Badge>
+                  <span className="flex items-center gap-1.5 text-sm capitalize text-muted-foreground">
+                    <TypeIcon className="h-4 w-4" />
+                    {nextInterview.type}
+                  </span>
+                </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {nextInterview.application?.job?.company || 'Interview'}
                   </p>
-                  <h3 className="mt-1 text-lg font-semibold leading-snug">{nextInterview.title}</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="success">Scheduled</Badge>
-                  <span className="flex items-center gap-1.5 text-sm capitalize text-muted-foreground">
-                    <TypeIcon className="h-3.5 w-3.5" />
-                    {nextInterview.type}
-                  </span>
+                  <h3 className="mt-1 text-lg font-semibold leading-snug text-foreground">{nextInterview.title}</h3>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarDays className="h-4 w-4" />
@@ -247,7 +287,7 @@ export default function DashboardPage() {
                     <span className="line-clamp-1">{nextInterview.location}</span>
                   </div>
                 )}
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   <Button asChild size="sm">
                     <Link to={`/interviews/${nextInterview._id}`}>View interview</Link>
                   </Button>
@@ -261,56 +301,16 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-start gap-3 rounded-sm border border-dashed border-border p-4">
-                <CalendarClock className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">No upcoming interview</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Schedule interviews for your applications and they will appear here.
-                  </p>
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/interviews">Go to interviews</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-start justify-between space-y-0">
-            <div className="space-y-1.5">
-              <CardTitle>Career flow</CardTitle>
-              <CardDescription>Where your applications stand right now.</CardDescription>
-            </div>
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-              <Link to="/applications">
-                View all
-                <ArrowRight />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {hasApplications ? (
-              <div className="space-y-4">
-                <TheFlowLine stages={flowStages} currentKey={currentKey} ariaLabel="Application pipeline" />
-                {terminal > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {terminal} application{terminal > 1 ? 's' : ''} in a closed state (rejected or withdrawn).
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-start gap-3 rounded-sm border border-dashed border-border p-4">
-                <Send className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">No applications yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Apply to a job to start building your pipeline.</p>
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/jobs">Browse jobs</Link>
-                </Button>
-              </div>
+              <EmptyState
+                icon={<CalendarClock className="h-6 w-6" />}
+                title="No upcoming interview"
+                description="Schedule interviews for your applications and they will appear here."
+                action={
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/interviews">Go to interviews</Link>
+                  </Button>
+                }
+              />
             )}
           </CardContent>
         </Card>
@@ -322,30 +322,35 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {hasSessions ? (
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Overall score</p>
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className="font-mono text-4xl leading-none tabular-nums">{averages.overallScore ?? '—'}</span>
-                  <span className="text-sm text-muted-foreground">/ 100</span>
+              <div className="space-y-5">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                  {averages.overallScore != null ? (
+                    <ScoreGauge score={averages.overallScore} size={96} caption="Overall" />
+                  ) : (
+                    <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full border border-border">
+                      <span className="font-mono text-2xl leading-none tabular-nums text-muted-foreground">—</span>
+                      <span className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Overall</span>
+                    </div>
+                  )}
+                  <dl className="min-w-0 flex-1 space-y-2.5">
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <dt className="text-muted-foreground">Sessions</dt>
+                      <dd className="font-mono tabular-nums">{totals.totalSessions}</dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <dt className="text-muted-foreground">Completed</dt>
+                      <dd className="font-mono tabular-nums">{totals.completedSessions}</dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <dt className="text-muted-foreground">Answered</dt>
+                      <dd className="font-mono tabular-nums">
+                        {totals.answeredQuestions}/{totals.totalQuestions}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
-                <dl className="mt-4 space-y-2 border-t border-border pt-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <dt className="text-muted-foreground">Sessions</dt>
-                    <dd className="font-mono tabular-nums">{totals.totalSessions}</dd>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <dt className="text-muted-foreground">Completed</dt>
-                    <dd className="font-mono tabular-nums">{totals.completedSessions}</dd>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <dt className="text-muted-foreground">Answered</dt>
-                    <dd className="font-mono tabular-nums">
-                      {totals.answeredQuestions}/{totals.totalQuestions}
-                    </dd>
-                  </div>
-                </dl>
                 {trend.length >= 2 && (
-                  <div className="mt-4 border-t border-border pt-4">
+                  <div className="border-t border-border pt-4">
                     <div className="mb-3 flex items-center justify-between">
                       <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Score trend</span>
                       <span className="font-mono text-xs tabular-nums text-muted-foreground">{trend.length} sessions</span>
@@ -361,7 +366,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-                <Button asChild size="sm" variant="outline" className="mt-4">
+                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link to="/analytics">
                     <BarChart3 />
                     View analytics
@@ -369,23 +374,23 @@ export default function DashboardPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-start gap-3 rounded-sm border border-dashed border-border p-4">
-                <Target className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">No practice sessions yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Generate questions for an interview and practice to start building your analytics.
-                  </p>
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/interviews">Go to interviews</Link>
-                </Button>
-              </div>
+              <EmptyState
+                icon={<Target className="h-6 w-6" />}
+                title="No practice sessions yet"
+                description="Generate questions for an interview and practice to start building your analytics."
+                action={
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/interviews">Go to interviews</Link>
+                  </Button>
+                }
+              />
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {hasSessions && (
+      {hasSessions && (
+        <div className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle>Recent sessions</CardTitle>
@@ -405,7 +410,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="font-mono text-sm tabular-nums">{session.overallScore}</span>
+                        <span className="font-mono text-sm tabular-nums font-medium">{session.overallScore}</span>
                         <Badge variant="success">Completed</Badge>
                       </div>
                     </li>
@@ -416,9 +421,7 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-        )}
 
-        {hasSessions && (
           <Card>
             <CardHeader>
               <CardTitle>Areas</CardTitle>
@@ -455,8 +458,8 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

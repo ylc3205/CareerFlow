@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import Loading from '../Loading.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
+import EmptyState from '../EmptyState.jsx'
 import QuestionList from './QuestionList.jsx'
 import { getPreparationApi, generatePreparationApi } from '../../api/interviews.api.js'
 import { Button } from '../ui/button.jsx'
@@ -31,6 +33,26 @@ const isQuestionValid = (item) =>
       typeof item.category === 'string' &&
       typeof item.difficulty === 'string'
   )
+
+function QuestionSkeleton({ count = 3 }) {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <div key={index} className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="h-5 w-8 animate-pulse rounded-full bg-muted" />
+            <div className="h-5 w-20 animate-pulse rounded-full bg-muted" />
+            <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+          </div>
+          <div className="mt-3 space-y-2">
+            <div className="h-3 w-3/4 animate-pulse rounded-sm bg-muted" />
+            <div className="h-3 w-1/2 animate-pulse rounded-sm bg-muted" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function PreparationSection({ interviewId }) {
   const [status, setStatus] = useState('idle') // idle | generating | success | error
@@ -88,80 +110,95 @@ export default function PreparationSection({ interviewId }) {
 
   return (
     <section className="space-y-6">
-      <header>
-        <h2 className="text-lg font-semibold tracking-tight">AI Interview Preparation</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {status === 'success'
-            ? `${questions.length} personalized question${questions.length === 1 ? '' : 's'}`
-            : 'Generate personalized interview questions based on this interview, the job, and your profile/resume.'}
-        </p>
+      <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">AI Preparation</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {status === 'success'
+              ? `${questions.length} personalized question${questions.length === 1 ? '' : 's'}`
+              : 'Generate customized questions for this interview based on the job and your profile/resume.'}
+          </p>
+        </div>
+        {status === 'idle' && (
+          <Button size="sm" onClick={handleGenerate}>
+            <Sparkles />
+            Generate questions
+          </Button>
+        )}
       </header>
 
-      {loading && (
-        <div className="flex items-center gap-2">
-          <Loading label="Checking for existing preparation…" />
-        </div>
-      )}
+      <div aria-live="polite">
+        {loading && (
+          <div className="flex items-center gap-2">
+            <Loading label="Checking for existing preparation…" />
+          </div>
+        )}
 
-      {!loading && loadError && (
-        <div className="flex gap-3">
-          <ErrorMessage title="Could not load interview preparation" message={loadError.message} />
-          <Button variant="outline" size="sm" onClick={loadExisting}>
-            Retry
-          </Button>
-        </div>
-      )}
+        {!loading && loadError && (
+          <div className="flex gap-3">
+            <ErrorMessage title="Could not load interview preparation" message={loadError.message} />
+            <Button variant="outline" size="sm" onClick={loadExisting}>
+              Retry
+            </Button>
+          </div>
+        )}
 
-      {!loading && !loadError && (
-        <>
-          {status === 'idle' && (
-            <div className="flex gap-2">
-              <Button onClick={handleGenerate}>Generate Interview Questions</Button>
-            </div>
-          )}
+        {!loading && !loadError && (
+          <>
+            {status === 'idle' && (
+              <EmptyState
+                icon={<Sparkles className="h-6 w-6" />}
+                title="No preparation yet"
+                description="Generate personalized questions for this interview and start studying."
+              />
+            )}
 
-          {status === 'generating' && (
-            <div className="flex items-center gap-2">
-              <Loading label="Generating personalized interview questions…" />
-            </div>
-          )}
+            {status === 'generating' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Loading label="Generating personalized interview questions…" />
+                </div>
+                <QuestionSkeleton />
+              </div>
+            )}
 
-          {status === 'success' && (
-            <div className="space-y-4">
-              <QuestionList questions={questions} />
-              <p className="text-sm text-muted-foreground">Answer these questions in the Interview Practice section below.</p>
-            </div>
-          )}
+            {status === 'success' && (
+              <div className="space-y-4">
+                <QuestionList questions={questions} />
+                <p className="text-sm text-muted-foreground">Answer these questions in the Interview Practice section below.</p>
+              </div>
+            )}
 
-          {status === 'error' && error && (
-            <div className="space-y-3">
-              {error.missingProfileResume ? (
-                <>
-                  <ErrorMessage
-                    title="Profile or resume required"
-                    message="Create a profile or add a resume before generating interview questions."
-                  />
-                  <div className="flex gap-2">
-                    <Link to="/profile">
-                      <Button variant="default" size="sm">Go to Profile</Button>
-                    </Link>
-                    <Link to="/resume">
-                      <Button variant="outline" size="sm">Go to Resume</Button>
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <ErrorMessage title="Unable to generate interview questions right now." message={error.message} errors={error.errors} />
-                  <Button variant="outline" size="sm" onClick={handleGenerate}>
-                    Try again
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </>
-      )}
+            {status === 'error' && error && (
+              <div className="space-y-3">
+                {error.missingProfileResume ? (
+                  <>
+                    <ErrorMessage
+                      title="Profile or resume required"
+                      message="Create a profile or add a resume before generating interview questions."
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Link to="/profile">
+                        <Button variant="default" size="sm">Go to Profile</Button>
+                      </Link>
+                      <Link to="/resume">
+                        <Button variant="outline" size="sm">Go to Resume</Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ErrorMessage title="Unable to generate interview questions right now." message={error.message} errors={error.errors} />
+                    <Button variant="outline" size="sm" onClick={handleGenerate}>
+                      Try again
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </section>
   )
 }
