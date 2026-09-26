@@ -387,4 +387,257 @@ describe('DB Lifecycle — Job Soft Delete, Historical Retention & appliedAt', (
       expect(mockIntDoc.deleteOne).toHaveBeenCalled()
     })
   })
+
+  // =========================================================================
+  // 7. IMP-01: JOB SOURCEURL UNIQUENESS & SOFT-DELETE RE-SAVING
+  // =========================================================================
+  describe('IMP-01: Job sourceUrl Uniqueness & Soft-Delete Re-Saving', () => {
+    it('createJob throws 409 when saving an active duplicate sourceUrl (E11000)', async () => {
+      const duplicateError = new Error('E11000 duplicate key error')
+      duplicateError.code = 11000
+      Job.create.mockRejectedValue(duplicateError)
+
+      await expect(
+        jobService.createJob(userId, {
+          title: 'Backend Dev',
+          company: 'VNG',
+          sourceUrl: 'https://example.com/job/1',
+        })
+      ).rejects.toThrow('You have already saved a job from this URL')
+    })
+
+    it('createJob succeeds when saving the same sourceUrl after previous job was soft-deleted', async () => {
+      // In MongoDB with partialFilterExpression { isDeleted: false },
+      // creating a new active document with the same sourceUrl succeeds (no E11000)
+      const newJobDoc = {
+        _id: new mongoose.Types.ObjectId().toString(),
+        user: userId,
+        title: 'Backend Dev Re-saved',
+        company: 'VNG',
+        sourceUrl: 'https://example.com/job/1',
+        isDeleted: false,
+      }
+      Job.create.mockResolvedValue(newJobDoc)
+
+      const res = await jobService.createJob(userId, {
+        title: 'Backend Dev Re-saved',
+        company: 'VNG',
+        sourceUrl: 'https://example.com/job/1',
+      })
+
+      expect(res).toBeDefined()
+      expect(res.sourceUrl).toBe('https://example.com/job/1')
+      expect(Job.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: userId,
+          sourceUrl: 'https://example.com/job/1',
+        })
+      )
+    })
+
+    it('allows different users to save the same sourceUrl', async () => {
+      const user2Id = new mongoose.Types.ObjectId().toString()
+      const jobUser2 = {
+        _id: new mongoose.Types.ObjectId().toString(),
+        user: user2Id,
+        title: 'Backend Dev',
+        company: 'VNG',
+        sourceUrl: 'https://example.com/job/1',
+        isDeleted: false,
+      }
+      Job.create.mockResolvedValue(jobUser2)
+
+      const res = await jobService.createJob(user2Id, {
+        title: 'Backend Dev',
+        company: 'VNG',
+        sourceUrl: 'https://example.com/job/1',
+      })
+
+      expect(res.user).toBe(user2Id)
+      expect(res.sourceUrl).toBe('https://example.com/job/1')
+    })
+  })
+
+  // =========================================================================
+  // 8. IMP-02: AI ANALYSIS SUMMARY FILTERING (EXCLUDES NULL / SOFT-DELETED JOBS)
+  // =========================================================================
+  describe('IMP-02: AI Analysis Summary Filtering', () => {
+    it('getSummary filters out analyses with null job reference or soft-deleted job', async () => {
+      const activeJobId = new mongoose.Types.ObjectId().toString()
+      const deletedJobId = new mongoose.Types.ObjectId().toString()
+
+      // 3 analyses in DB:
+      // 1. Populated with an active job (isDeleted: false) -> score 90
+      // 2. Populated with a soft-deleted job (isDeleted: true) -> score 40 (must be ignored)
+      // 3. Populated with null job (job was deleted) -> score 50 (must be ignored)
+      const mockAnalyses = [
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 90,
+          job: { _id: activeJobId, title: 'Active Job', company: 'Acme', isDeleted: false },
+        },
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 40,
+          job: { _id: deletedJobId, title: 'Deleted Job', company: 'Old Corp', isDeleted: true },
+        },
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 50,
+          job: null,
+        },
+      ]
+
+      AIAnalysis.find.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockAnalyses),
+      })
+      Job.countDocuments.mockResolvedValue(2) // 2 active jobs total in DB
+
+      const summary = await aiAnalysisService.getSummary(userId)
+
+      // Only activeJobId should be counted in summary metrics
+      expect(summary.totalAnalyses).toBe(1)
+      expect(summary.averageMatchScore).toBe(90)
+      expect(summary.highestMatch.matchScore).toBe(90)
+      expect(summary.highestMatch.job._id).toBe(activeJobId)
+      expect(summary.lowestMatch.matchScore).toBe(90)
+      expect(summary.matchedJobs).toBe(1)
+      expect(summary.unmatchedJobs).toBe(1) // 2 active jobs - 1 matched = 1 unmatched
+    })
+
+    it('getSummary does not inflate matchedJobs with undefined when all jobs are null/deleted', async () => {
+      const mockAnalyses = [
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 40,
+          job: null,
+        },
+      ]
+
+      AIAnalysis.find.mockReturnValue({
+        populate: vi.fn().mockResolvedValue(mockAnalyses),
+      })
+      Job.countDocuments.mockResolvedValue(0)
+
+      const summary = await aiAnalysisService.getSummary(userId)
+
+      expect(summary.totalAnalyses).toBe(0)
+      expect(summary.averageMatchScore).toBe(0)
+      expect(summary.matchedJobs).toBe(0)
+      expect(summary.unmatchedJobs).toBe(0)
+      expect(summary.highestMatch).toBeNull()
+      expect(summary.lowestMatch).toBeNull()
+    })
+  })
+
+  // =========================================================================
+  // 9. IMP-03: EXCLUDE SOFT-DELETED JOBS FROM APPLICATION & INTERVIEW SEARCH
+  // =========================================================================
+  describe('IMP-03: Search Subqueries Exclude Soft-Deleted Jobs', () => {
+    it('listApplications search filters Job.find with isDeleted: { $ne: true }', async () => {
+      Job.find.mockReturnValue({
+        select: vi.fn().mockResolvedValue([{ _id: jobId }]),
+      })
+      Application.countDocuments.mockResolvedValue(1)
+      Application.find.mockReturnValue({
+        sort: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        populate: vi.fn().mockResolvedValue([{ _id: appId, job: { _id: jobId, title: 'Node Dev' } }]),
+      })
+
+      await applicationService.listApplications(userId, { search: 'Node' })
+
+      expect(Job.find).toHaveBeenCalledWith({
+        user: userId,
+        isDeleted: { $ne: true },
+        $or: [{ title: expect.any(RegExp) }, { company: expect.any(RegExp) }],
+      })
+    })
+
+    it('listInterviews search filters Job.find with isDeleted: { $ne: true }', async () => {
+      Job.find.mockReturnValue({
+        select: vi.fn().mockResolvedValue([{ _id: jobId }]),
+      })
+      Application.find.mockReturnValue({
+        select: vi.fn().mockResolvedValue([{ _id: appId }]),
+      })
+      Interview.countDocuments.mockResolvedValue(1)
+      Interview.find.mockReturnValue({
+        sort: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        populate: vi.fn().mockResolvedValue([{ _id: 'int-1', application: { _id: appId } }]),
+      })
+
+      await interviewService.listInterviews(userId, { search: 'Node' })
+
+      expect(Job.find).toHaveBeenCalledWith({
+        user: userId,
+        isDeleted: { $ne: true },
+        $or: [{ title: expect.any(RegExp) }, { company: expect.any(RegExp) }],
+      })
+    })
+  })
+
+  // =========================================================================
+  // 10. IMP-06: TARGETED AI ANALYSIS QUERY BY JOB ID
+  // =========================================================================
+  describe('IMP-06: Targeted AI Analysis Query', () => {
+    it('listAnalyses queries by user and job when filter.job is provided', async () => {
+      const targetJobId = new mongoose.Types.ObjectId().toString()
+      const mockAnalyses = [
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 92,
+          job: { _id: targetJobId, title: 'Node Dev', company: 'Tech Corp', isDeleted: false },
+        },
+      ]
+
+      AIAnalysis.find.mockReturnValue({
+        sort: vi.fn().mockReturnThis(),
+        populate: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue(mockAnalyses),
+      })
+
+      const results = await aiAnalysisService.listAnalyses(userId, { job: targetJobId })
+
+      expect(AIAnalysis.find).toHaveBeenCalledWith({ user: userId, job: targetJobId })
+      expect(results).toHaveLength(1)
+      expect(results[0].job._id).toBe(targetJobId)
+    })
+
+    it('listAnalyses returns empty array without DB query if filter.job is invalid ObjectId', async () => {
+      AIAnalysis.find.mockClear()
+      const results = await aiAnalysisService.listAnalyses(userId, { job: 'invalid-id' })
+      expect(results).toEqual([])
+      expect(AIAnalysis.find).not.toHaveBeenCalled()
+    })
+
+    it('listAnalyses excludes analyses referencing soft-deleted jobs', async () => {
+      const targetJobId = new mongoose.Types.ObjectId().toString()
+      const mockAnalyses = [
+        {
+          _id: new mongoose.Types.ObjectId().toString(),
+          user: userId,
+          matchScore: 85,
+          job: { _id: targetJobId, title: 'Deleted Job', isDeleted: true },
+        },
+      ]
+
+      AIAnalysis.find.mockReturnValue({
+        sort: vi.fn().mockReturnThis(),
+        populate: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue(mockAnalyses),
+      })
+
+      const results = await aiAnalysisService.listAnalyses(userId, { job: targetJobId })
+      expect(results).toHaveLength(0)
+    })
+  })
 })

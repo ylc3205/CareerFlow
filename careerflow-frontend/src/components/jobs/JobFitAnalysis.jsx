@@ -9,6 +9,7 @@ import { Button } from '../ui/button.jsx'
 // Never mix with interview performance strengths/weaknesses.
 export default function JobFitAnalysis({ analysis, analyzing, error, onAnalyze }) {
   const lensLabel = analysis?.careerDirectionTitle ? `Analyzed using: ${analysis.careerDirectionTitle}` : 'Analyzed using: General / Base Resume'
+  const focusBadgeLabel = analysis?.careerDirectionTitle ? `Focus: ${analysis.careerDirectionTitle}` : 'Focus: Base Resume'
 
   return (
     <section className="space-y-6">
@@ -52,7 +53,12 @@ export default function JobFitAnalysis({ analysis, analyzing, error, onAnalyze }
             <ScoreGauge score={analysis.matchScore} size={120} caption="Match" />
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">{lensLabel}</p>
+          <div className="flex flex-col items-center gap-1.5">
+            <Badge variant="secondary" className="font-normal text-xs">
+              {focusBadgeLabel}
+            </Badge>
+            <p className="text-xs text-muted-foreground text-center">{lensLabel}</p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">

@@ -77,10 +77,13 @@ describe('ApplicationDetailPage', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders loading state while fetching', () => {
+  it('renders loading state while fetching', async () => {
     mocks.getApplication.mockReturnValue(new Promise(() => {}))
     renderComponent()
     expect(screen.getByText(/Loading application.../i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(mocks.listInterviews).toHaveBeenCalledWith({ application: 'app_1' })
+    })
   })
 
   it('renders application details on successful fetch', async () => {
@@ -152,7 +155,7 @@ describe('ApplicationDetailPage', () => {
     })
   })
 
-  it('deletes application and navigates back to list', async () => {
+  it('deletes application and navigates back to list via ConfirmDialog', async () => {
     const user = userEvent.setup()
     mocks.getApplication.mockResolvedValue({ data: { application: appA } })
     mocks.deleteApplication.mockResolvedValue({ status: 200 })
@@ -163,7 +166,12 @@ describe('ApplicationDetailPage', () => {
     const deleteBtn = screen.getByRole('button', { name: 'Delete' })
     await user.click(deleteBtn)
 
-    expect(window.confirm).toHaveBeenCalledWith('Delete this application? This cannot be undone.')
+    const dialog = screen.getByRole('dialog', { name: 'Delete this application?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
     expect(mocks.deleteApplication).toHaveBeenCalledWith('app_1')
     expect(await screen.findByTestId('location')).toHaveTextContent('/applications')
   })

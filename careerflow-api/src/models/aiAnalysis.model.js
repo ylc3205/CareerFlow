@@ -21,6 +21,21 @@ const aiAnalysisSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
+    skillsScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    experienceScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    backgroundScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
     matchedSkills: { type: [String], default: [] },
     missingSkills: { type: [String], default: [] },
     strengths: { type: [String], default: [] },

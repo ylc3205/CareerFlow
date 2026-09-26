@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { Badge } from '../components/ui/badge.jsx'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
@@ -39,6 +40,7 @@ export default function JobDetailPage() {
 
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   // Reset per-job state whenever the route id changes. Without this, stale
   // match / application / error state from a previously viewed job can leak
@@ -99,7 +101,7 @@ export default function JobDetailPage() {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await listAnalysesApi()
+        const res = await listAnalysesApi({ job: id })
         if (cancelled) return
         const found = res.data.analyses.find((analysis) => analysis.job && String(analysis.job._id) === String(id))
         if (found) setMatch(found)
@@ -185,8 +187,12 @@ export default function JobDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this job? This cannot be undone.')) return
+  const handleDelete = () => {
+    setConfirmDeleteOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    setConfirmDeleteOpen(false)
     setDeleting(true)
     setDeleteError(null)
     try {
@@ -407,6 +413,17 @@ export default function JobDetailPage() {
           )}
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this job?"
+        description="This will permanently delete this job and any associated data. This cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={deleting}
+      />
     </div>
   )
 }

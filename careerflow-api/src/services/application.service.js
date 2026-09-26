@@ -50,6 +50,7 @@ const listApplications = async (userId, query = {}) => {
     const regex = new RegExp(escapeRegExp(String(search).trim()), 'i')
     const matchingJobs = await Job.find({
       user: userId,
+      isDeleted: { $ne: true },
       $or: [{ title: regex }, { company: regex }],
     }).select('_id')
     searchJobIds = matchingJobs.map((job) => job._id)

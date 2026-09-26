@@ -12,6 +12,7 @@ import {
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { Badge } from '../components/ui/badge.jsx'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
@@ -46,6 +47,7 @@ export default function InterviewDetailPage() {
 
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   // Reset per-interview transient state whenever the route id changes.
   // Without this, stale editing / error state from a previously viewed
@@ -59,6 +61,7 @@ export default function InterviewDetailPage() {
     setFormError(null)
     setDeleting(false)
     setDeleteError(null)
+    setConfirmDeleteOpen(false)
   }, [id])
 
   useEffect(() => {
@@ -96,8 +99,12 @@ export default function InterviewDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this interview? This cannot be undone.')) return
+  const handleDelete = () => {
+    setConfirmDeleteOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    setConfirmDeleteOpen(false)
     setDeleting(true)
     setDeleteError(null)
     try {
@@ -305,6 +312,17 @@ export default function InterviewDetailPage() {
           </Card>
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this interview?"
+        description="This will permanently delete this interview and any associated preparation and practice sessions. This cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={deleting}
+      />
     </div>
   )
 }

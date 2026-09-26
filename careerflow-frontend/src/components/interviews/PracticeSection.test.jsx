@@ -75,7 +75,7 @@ describe('PracticeSection', () => {
     expect(mocks.createPracticeSession).toHaveBeenCalledWith('int_1')
   })
 
-  it('deletes a practice session with confirmation', async () => {
+  it('deletes a practice session with confirmation via ConfirmDialog', async () => {
     const user = userEvent.setup()
     mocks.listPracticeSessions.mockResolvedValue({ data: { sessions: [sampleSession] } })
     mocks.deletePracticeSession.mockResolvedValue({ status: 200 })
@@ -85,7 +85,12 @@ describe('PracticeSection', () => {
     const deleteBtn = await screen.findByRole('button', { name: /^Delete$/i })
     await user.click(deleteBtn)
 
-    expect(window.confirm).toHaveBeenCalledWith('Delete this practice session? This cannot be undone.')
+    const dialog = screen.getByRole('dialog', { name: 'Delete this practice session?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
     expect(mocks.deletePracticeSession).toHaveBeenCalledWith('int_1', 'session_1')
   })
 
@@ -102,5 +107,19 @@ describe('PracticeSection', () => {
     await user.click(retryBtn)
 
     expect(await screen.findByText('In progress')).toBeInTheDocument()
+  })
+
+  it('resumes an in-progress session at the first unanswered question when clicking Continue', async () => {
+    const user = userEvent.setup()
+    mocks.listPracticeSessions.mockResolvedValue({ data: { sessions: [sampleSession] } })
+
+    render(<PracticeSection interviewId="int_1" />)
+
+    const continueBtn = await screen.findByRole('button', { name: /Continue/i })
+    await user.click(continueBtn)
+
+    // Should resume at Question 2 of 2 (first unanswered question), not Question 1
+    expect(screen.getByText('Question 2 of 2')).toBeInTheDocument()
+    expect(screen.getByText('Unanswered')).toBeInTheDocument()
   })
 })

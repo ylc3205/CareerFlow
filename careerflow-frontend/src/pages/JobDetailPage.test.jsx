@@ -92,6 +92,7 @@ const routerHarness = (path) =>
       <Routes>
         <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/jobs/:id/edit" element={<div>edit route</div>} />
+        <Route path="/jobs" element={<div>jobs list</div>} />
       </Routes>
       <LocationDisplay />
     </MemoryRouter>
@@ -109,10 +110,13 @@ describe('JobDetailPage', () => {
     mocks.createApplication.mockResolvedValue({ data: { application: appFor('job_1') } })
   })
 
-  it('shows a loading state while fetching', () => {
+  it('shows a loading state while fetching', async () => {
     mocks.getJob.mockReturnValue(new Promise(() => {}))
     routerHarness('/jobs/job_1')
     expect(screen.getByText('Loading job...')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(mocks.listDirections).toHaveBeenCalledWith({ limit: 100 })
+    })
   })
 
   it('renders the job to a successful load', async () => {
@@ -290,5 +294,24 @@ describe('JobDetailPage', () => {
     // Instead the fresh job_2 exposes the initial actions.
     expect(screen.getByRole('button', { name: 'Analyze Fit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument()
+  })
+
+  it('deletes job via ConfirmDialog', async () => {
+    const user = userEvent.setup()
+    routerHarness('/jobs/job_1')
+    await screen.findByText('Backend Developer')
+
+    const deleteBtn = screen.getByRole('button', { name: 'Delete' })
+    await user.click(deleteBtn)
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete this job?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
+    await waitFor(() => {
+      expect(mocks.deleteJob).toHaveBeenCalledWith('job_1')
+    })
   })
 })

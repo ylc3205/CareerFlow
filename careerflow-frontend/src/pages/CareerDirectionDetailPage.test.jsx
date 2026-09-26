@@ -25,6 +25,7 @@ const renderDetail = () =>
     <MemoryRouter initialEntries={['/career-directions/cd_1']}>
       <Routes>
         <Route path="/career-directions/:id" element={<CareerDirectionDetailPage />} />
+        <Route path="/career-directions" element={<div>career directions list</div>} />
       </Routes>
       <LocationDisplay />
     </MemoryRouter>
@@ -38,15 +39,9 @@ describe('CareerDirectionDetailPage', () => {
   })
 
   it('shows a loading state while fetching', () => {
-    let resolveLoad
-    mocks.get.mockReturnValue(
-      new Promise((resolve) => {
-        resolveLoad = resolve
-      })
-    )
+    mocks.get.mockReturnValue(new Promise(() => {}))
     renderDetail()
     expect(screen.getByText('Loading career direction...')).toBeInTheDocument()
-    resolveLoad({ data: { careerDirection: mockSavedDirection } })
   })
 
   it('renders the persisted direction', async () => {

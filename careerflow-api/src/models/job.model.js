@@ -54,9 +54,10 @@ const jobSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-// Compound unique index: one user cannot save the same URL twice.
-// Uses $type: 'string' in partialFilterExpression (supported by MongoDB Atlas):
-//   - Only indexes documents where sourceUrl is an actual non-null string
+// Compound unique index: one user cannot save the same URL twice across active jobs.
+// Uses $type: 'string' and isDeleted: false in partialFilterExpression:
+//   - Only indexes active documents where sourceUrl is an actual non-null string
+//   - Soft-deleted documents (isDeleted: true) are excluded, allowing the same URL to be re-saved
 //   - Documents without sourceUrl, or with sourceUrl: undefined/null, are excluded
 //   - Empty string sourceUrl values are normalized to undefined by the service
 //     before writing, so they are also excluded from the index
@@ -64,7 +65,7 @@ jobSchema.index(
   { user: 1, sourceUrl: 1 },
   {
     unique: true,
-    partialFilterExpression: { sourceUrl: { $type: 'string' } },
+    partialFilterExpression: { sourceUrl: { $type: 'string' }, isDeleted: false },
   }
 )
 

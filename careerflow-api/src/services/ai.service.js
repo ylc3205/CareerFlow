@@ -8,7 +8,9 @@ const providers = {
 }
 
 const generateMockResult = () => ({
-  matchScore: 87,
+  skillsScore: 90,
+  experienceScore: 85,
+  backgroundScore: 85,
   matchedSkills: ['Node.js', 'Express.js', 'MongoDB'],
   missingSkills: ['Redis', 'Docker'],
   strengths: ['Backend experience', 'REST API design'],

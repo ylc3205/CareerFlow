@@ -124,7 +124,7 @@ describe('ApplicationsPage', () => {
     expect(searchInput).toHaveValue('')
   })
 
-  it('handles application deletion', async () => {
+  it('handles application deletion via ConfirmDialog', async () => {
     const user = userEvent.setup()
     mocks.listApplications.mockResolvedValue({
       data: {
@@ -140,7 +140,12 @@ describe('ApplicationsPage', () => {
     const deleteBtn = screen.getByRole('button', { name: /Delete/i })
     await user.click(deleteBtn)
 
-    expect(window.confirm).toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Delete this application?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
     expect(mocks.deleteApplication).toHaveBeenCalledWith('app_1')
   })
 

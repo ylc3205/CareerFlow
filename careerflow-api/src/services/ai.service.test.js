@@ -56,9 +56,11 @@ describe('ai.service', () => {
       expect(geminiGenerateStructuredText).not.toHaveBeenCalled()
     })
 
-    it('generateStructuredJSON returns mock match result', async () => {
+    it('generateStructuredJSON returns mock match result with dimension scores', async () => {
       const result = await generateStructuredJSON('prompt', {})
-      expect(result.matchScore).toBe(87)
+      expect(result.skillsScore).toBe(90)
+      expect(result.experienceScore).toBe(85)
+      expect(result.backgroundScore).toBe(85)
       expect(result.matchedSkills).toContain('Node.js')
     })
 

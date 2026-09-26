@@ -14,6 +14,7 @@ import EmptyState from '../components/EmptyState.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import ListEditor from '../components/ListEditor.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { Badge } from '../components/ui/badge.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.jsx'
@@ -256,6 +257,8 @@ export default function ResumePage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
 
   // Messages
   const [error, setError] = useState(null)
@@ -450,9 +453,13 @@ export default function ResumePage() {
   // Discard flow
   // -----------------------------------------------------------------------
 
-  const handleDiscard = async () => {
+  const handleDiscard = () => {
     if (deleting) return
-    if (!window.confirm('Discard the AI-generated draft? Your uploaded CV will remain saved.')) return
+    setConfirmDiscardOpen(true)
+  }
+
+  const handleDiscardConfirm = async () => {
+    setConfirmDiscardOpen(false)
     setDeleting(true)
     setError(null)
     setSuccess(null)
@@ -500,9 +507,13 @@ export default function ResumePage() {
     [manualForm, saving],
   )
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     if (deleting) return
-    if (!window.confirm('Delete your resume? This cannot be undone.')) return
+    setConfirmDeleteOpen(true)
+  }, [deleting])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    setConfirmDeleteOpen(false)
     setDeleting(true)
     setError(null)
     setSuccess(null)
@@ -526,7 +537,7 @@ export default function ResumePage() {
     } finally {
       setDeleting(false)
     }
-  }, [deleting])
+  }, [])
 
   // -----------------------------------------------------------------------
   // Profile prefill
@@ -552,7 +563,7 @@ export default function ResumePage() {
   // Render: Resume form cards (shared between draft and manual)
   // -----------------------------------------------------------------------
 
-  const renderFormCards = (formState, onFieldChange, onListChange, onListItemChange) => {
+  const renderFormCards = (formState, onFieldChange, onListChange, onListItemChange, idPrefix = 'manual') => {
     const skillsList = splitList(formState.skills)
     const languagesList = splitList(formState.languages)
     return (
@@ -564,9 +575,9 @@ export default function ResumePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className={fieldClass}>
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor={`${idPrefix}-title`}>Title</Label>
               <Input
-                id="title"
+                id={`${idPrefix}-title`}
                 name="title"
                 placeholder="e.g. Senior Frontend Engineer"
                 value={formState.title}
@@ -574,9 +585,9 @@ export default function ResumePage() {
               />
             </div>
             <div className={fieldClass}>
-              <Label htmlFor="summary">Summary</Label>
+              <Label htmlFor={`${idPrefix}-summary`}>Summary</Label>
               <Textarea
-                id="summary"
+                id={`${idPrefix}-summary`}
                 name="summary"
                 rows={4}
                 placeholder="A short professional summary"
@@ -596,9 +607,9 @@ export default function ResumePage() {
           <CardContent className="space-y-4">
             <div className={rowClass}>
               <div className={fieldClass}>
-                <Label htmlFor="skills">Skills</Label>
+                <Label htmlFor={`${idPrefix}-skills`}>Skills</Label>
                 <Input
-                  id="skills"
+                  id={`${idPrefix}-skills`}
                   name="skills"
                   placeholder="JavaScript, React, Node.js"
                   value={formState.skills}
@@ -615,9 +626,9 @@ export default function ResumePage() {
                 )}
               </div>
               <div className={fieldClass}>
-                <Label htmlFor="languages">Languages</Label>
+                <Label htmlFor={`${idPrefix}-languages`}>Languages</Label>
                 <Input
-                  id="languages"
+                  id={`${idPrefix}-languages`}
                   name="languages"
                   placeholder="English, Spanish"
                   value={formState.languages}
@@ -653,26 +664,26 @@ export default function ResumePage() {
                 <>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`experience-company-${index}`}>Company</Label>
+                      <Label htmlFor={`${idPrefix}-experience-company-${index}`}>Company</Label>
                       <Input
-                        id={`experience-company-${index}`}
+                        id={`${idPrefix}-experience-company-${index}`}
                         value={item.company}
                         onChange={(e) => onListItemChange('experience', index, { company: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`experience-position-${index}`}>Position</Label>
+                      <Label htmlFor={`${idPrefix}-experience-position-${index}`}>Position</Label>
                       <Input
-                        id={`experience-position-${index}`}
+                        id={`${idPrefix}-experience-position-${index}`}
                         value={item.position}
                         onChange={(e) => onListItemChange('experience', index, { position: e.target.value })}
                       />
                     </div>
                   </div>
                   <div className={fieldClass}>
-                    <Label htmlFor={`experience-description-${index}`}>Description</Label>
+                    <Label htmlFor={`${idPrefix}-experience-description-${index}`}>Description</Label>
                     <Textarea
-                      id={`experience-description-${index}`}
+                      id={`${idPrefix}-experience-description-${index}`}
                       rows={2}
                       value={item.description}
                       onChange={(e) => onListItemChange('experience', index, { description: e.target.value })}
@@ -681,19 +692,19 @@ export default function ResumePage() {
                   </div>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`experience-start-${index}`}>Start date</Label>
+                      <Label htmlFor={`${idPrefix}-experience-start-${index}`}>Start date</Label>
                       <Input
                         type="date"
-                        id={`experience-start-${index}`}
+                        id={`${idPrefix}-experience-start-${index}`}
                         value={item.startDate}
                         onChange={(e) => onListItemChange('experience', index, { startDate: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`experience-end-${index}`}>End date</Label>
+                      <Label htmlFor={`${idPrefix}-experience-end-${index}`}>End date</Label>
                       <Input
                         type="date"
-                        id={`experience-end-${index}`}
+                        id={`${idPrefix}-experience-end-${index}`}
                         value={item.endDate}
                         disabled={item.current}
                         onChange={(e) => onListItemChange('experience', index, { endDate: e.target.value })}
@@ -731,17 +742,17 @@ export default function ResumePage() {
                 <>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`education-school-${index}`}>School</Label>
+                      <Label htmlFor={`${idPrefix}-education-school-${index}`}>School</Label>
                       <Input
-                        id={`education-school-${index}`}
+                        id={`${idPrefix}-education-school-${index}`}
                         value={item.school}
                         onChange={(e) => onListItemChange('education', index, { school: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`education-degree-${index}`}>Degree</Label>
+                      <Label htmlFor={`${idPrefix}-education-degree-${index}`}>Degree</Label>
                       <Input
-                        id={`education-degree-${index}`}
+                        id={`${idPrefix}-education-degree-${index}`}
                         value={item.degree}
                         onChange={(e) => onListItemChange('education', index, { degree: e.target.value })}
                       />
@@ -749,9 +760,9 @@ export default function ResumePage() {
                   </div>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`education-field-${index}`}>Field of study</Label>
+                      <Label htmlFor={`${idPrefix}-education-field-${index}`}>Field of study</Label>
                       <Input
-                        id={`education-field-${index}`}
+                        id={`${idPrefix}-education-field-${index}`}
                         value={item.fieldOfStudy}
                         onChange={(e) => onListItemChange('education', index, { fieldOfStudy: e.target.value })}
                       />
@@ -759,19 +770,19 @@ export default function ResumePage() {
                   </div>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`education-start-${index}`}>Start date</Label>
+                      <Label htmlFor={`${idPrefix}-education-start-${index}`}>Start date</Label>
                       <Input
                         type="date"
-                        id={`education-start-${index}`}
+                        id={`${idPrefix}-education-start-${index}`}
                         value={item.startDate}
                         onChange={(e) => onListItemChange('education', index, { startDate: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`education-end-${index}`}>End date</Label>
+                      <Label htmlFor={`${idPrefix}-education-end-${index}`}>End date</Label>
                       <Input
                         type="date"
-                        id={`education-end-${index}`}
+                        id={`${idPrefix}-education-end-${index}`}
                         value={item.endDate}
                         onChange={(e) => onListItemChange('education', index, { endDate: e.target.value })}
                       />
@@ -801,17 +812,17 @@ export default function ResumePage() {
                   <>
                     <div className={rowClass}>
                       <div className={fieldClass}>
-                        <Label htmlFor={`projects-name-${index}`}>Name</Label>
+                        <Label htmlFor={`${idPrefix}-projects-name-${index}`}>Name</Label>
                         <Input
-                          id={`projects-name-${index}`}
+                          id={`${idPrefix}-projects-name-${index}`}
                           value={item.name}
                           onChange={(e) => onListItemChange('projects', index, { name: e.target.value })}
                         />
                       </div>
                       <div className={fieldClass}>
-                        <Label htmlFor={`projects-url-${index}`}>URL</Label>
+                        <Label htmlFor={`${idPrefix}-projects-url-${index}`}>URL</Label>
                         <Input
-                          id={`projects-url-${index}`}
+                          id={`${idPrefix}-projects-url-${index}`}
                           placeholder="https://..."
                           value={item.url}
                           onChange={(e) => onListItemChange('projects', index, { url: e.target.value })}
@@ -819,9 +830,9 @@ export default function ResumePage() {
                       </div>
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`projects-techstack-${index}`}>Tech stack</Label>
+                      <Label htmlFor={`${idPrefix}-projects-techstack-${index}`}>Tech stack</Label>
                       <Input
-                        id={`projects-techstack-${index}`}
+                        id={`${idPrefix}-projects-techstack-${index}`}
                         placeholder="React, Vite, Node.js"
                         value={item.techStack}
                         onChange={(e) => onListItemChange('projects', index, { techStack: e.target.value })}
@@ -837,9 +848,9 @@ export default function ResumePage() {
                       )}
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`projects-description-${index}`}>Description</Label>
+                      <Label htmlFor={`${idPrefix}-projects-description-${index}`}>Description</Label>
                       <Textarea
-                        id={`projects-description-${index}`}
+                        id={`${idPrefix}-projects-description-${index}`}
                         rows={2}
                         value={item.description}
                         onChange={(e) => onListItemChange('projects', index, { description: e.target.value })}
@@ -869,17 +880,17 @@ export default function ResumePage() {
                 <>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`certifications-name-${index}`}>Name</Label>
+                      <Label htmlFor={`${idPrefix}-certifications-name-${index}`}>Name</Label>
                       <Input
-                        id={`certifications-name-${index}`}
+                        id={`${idPrefix}-certifications-name-${index}`}
                         value={item.name}
                         onChange={(e) => onListItemChange('certifications', index, { name: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`certifications-issuer-${index}`}>Issuer</Label>
+                      <Label htmlFor={`${idPrefix}-certifications-issuer-${index}`}>Issuer</Label>
                       <Input
-                        id={`certifications-issuer-${index}`}
+                        id={`${idPrefix}-certifications-issuer-${index}`}
                         value={item.issuer}
                         onChange={(e) => onListItemChange('certifications', index, { issuer: e.target.value })}
                       />
@@ -887,28 +898,28 @@ export default function ResumePage() {
                   </div>
                   <div className={rowClass}>
                     <div className={fieldClass}>
-                      <Label htmlFor={`certifications-issuedate-${index}`}>Issue date</Label>
+                      <Label htmlFor={`${idPrefix}-certifications-issuedate-${index}`}>Issue date</Label>
                       <Input
                         type="date"
-                        id={`certifications-issuedate-${index}`}
+                        id={`${idPrefix}-certifications-issuedate-${index}`}
                         value={item.issueDate}
                         onChange={(e) => onListItemChange('certifications', index, { issueDate: e.target.value })}
                       />
                     </div>
                     <div className={fieldClass}>
-                      <Label htmlFor={`certifications-expirydate-${index}`}>Expiry date</Label>
+                      <Label htmlFor={`${idPrefix}-certifications-expirydate-${index}`}>Expiry date</Label>
                       <Input
                         type="date"
-                        id={`certifications-expirydate-${index}`}
+                        id={`${idPrefix}-certifications-expirydate-${index}`}
                         value={item.expiryDate}
                         onChange={(e) => onListItemChange('certifications', index, { expiryDate: e.target.value })}
                       />
                     </div>
                   </div>
                   <div className={fieldClass}>
-                    <Label htmlFor={`certifications-url-${index}`}>URL</Label>
+                    <Label htmlFor={`${idPrefix}-certifications-url-${index}`}>URL</Label>
                     <Input
-                      id={`certifications-url-${index}`}
+                      id={`${idPrefix}-certifications-url-${index}`}
                       placeholder="https://..."
                       value={item.url}
                       onChange={(e) => onListItemChange('certifications', index, { url: e.target.value })}
@@ -1011,6 +1022,7 @@ export default function ResumePage() {
             updateManualField,
             (section, value) => setManualForm((prev) => ({ ...prev, [section]: value })),
             updateManualListItem,
+            'manual',
           )}
 
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -1208,6 +1220,7 @@ export default function ResumePage() {
               updateDraftField,
               (section, value) => setDraftForm((prev) => ({ ...prev, [section]: value })),
               updateDraftListItem,
+              'draft',
             )}
 
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -1250,6 +1263,28 @@ export default function ResumePage() {
       {renderTabs()}
 
       {activeTab === 'manual' ? renderManualTab() : renderUploadTab()}
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete your resume?"
+        description="This will permanently delete your resume information. This cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={deleting}
+      />
+
+      <ConfirmDialog
+        open={confirmDiscardOpen}
+        onOpenChange={setConfirmDiscardOpen}
+        onConfirm={handleDiscardConfirm}
+        title="Discard AI draft?"
+        description="Discard the AI-generated draft? Your uploaded CV will remain saved."
+        confirmLabel="Discard"
+        variant="destructive"
+        loading={deleting}
+      />
     </div>
   )
 }

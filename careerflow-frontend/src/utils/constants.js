@@ -9,7 +9,7 @@ export const APPLICATION_STATUS_VARIANT = {
   screening: 'warning',
   interviewing: 'warning',
   offer: 'success',
-  rejected: 'danger',
+  rejected: 'destructive',
   withdrawn: 'default',
 }
 
@@ -35,7 +35,7 @@ export const INTERVIEW_STATUS_VARIANT = {
   scheduled: 'primary',
   completed: 'success',
   canceled: 'destructive',
-  'no-show': 'danger',
+  'no-show': 'destructive',
 }
 
 export const PRACTICE_STATUSES = ['not_started', 'in_progress', 'completed']
@@ -74,5 +74,5 @@ export const PRACTICE_DIFFICULTY_LABEL = {
 export const PRACTICE_DIFFICULTY_VARIANT = {
   easy: 'success',
   medium: 'warning',
-  hard: 'danger',
+  hard: 'destructive',
 }

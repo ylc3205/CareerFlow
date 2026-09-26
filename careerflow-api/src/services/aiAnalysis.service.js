@@ -5,14 +5,25 @@ import ApiError from '../utils/ApiError.js'
 
 // Fields populated on job when returning analyses.
 // Excludes: user (internal ownership), description, requirements, etc.
-const JOB_POPULATE_SELECT = '_id title company'
+const JOB_POPULATE_SELECT = '_id title company isDeleted'
 
-const listAnalyses = async (userId) => {
-  const analyses = await AIAnalysis.find({ user: userId })
+const listAnalyses = async (userId, filter = {}) => {
+  const query = { user: userId }
+
+  if (filter.job) {
+    if (!mongoose.Types.ObjectId.isValid(filter.job)) {
+      return []
+    }
+    query.job = filter.job
+  }
+
+  const analyses = await AIAnalysis.find(query)
     .sort({ createdAt: -1 })
     .populate('job', JOB_POPULATE_SELECT)
     .select('-user -model -provider -__v')
-  return analyses
+
+  // Filter out analyses whose populated Job is null/undefined or soft-deleted
+  return analyses.filter((a) => a.job && a.job._id && a.job.isDeleted !== true)
 }
 
 const jobRef = (analysis) => ({
@@ -23,15 +34,18 @@ const jobRef = (analysis) => ({
 const getSummary = async (userId) => {
   const analyses = await AIAnalysis.find({ user: userId }).populate('job', JOB_POPULATE_SELECT)
 
-  const totalAnalyses = analyses.length
+  // Ignore analyses whose populated Job is null/undefined or soft-deleted
+  const activeAnalyses = analyses.filter((a) => a.job && a.job._id && a.job.isDeleted !== true)
+
+  const totalAnalyses = activeAnalyses.length
   const averageMatchScore =
     totalAnalyses === 0
       ? 0
-      : Math.round((analyses.reduce((sum, a) => sum + a.matchScore, 0) / totalAnalyses) * 10) / 10
+      : Math.round((activeAnalyses.reduce((sum, a) => sum + a.matchScore, 0) / totalAnalyses) * 10) / 10
 
   let highestMatch = null
   let lowestMatch = null
-  for (const analysis of analyses) {
+  for (const analysis of activeAnalyses) {
     if (!highestMatch || analysis.matchScore > highestMatch.matchScore) {
       highestMatch = jobRef(analysis)
     }
@@ -40,7 +54,7 @@ const getSummary = async (userId) => {
     }
   }
 
-  const matchedJobIds = new Set(analyses.map((a) => String(a.job?._id)))
+  const matchedJobIds = new Set(activeAnalyses.map((a) => String(a.job._id)))
   const totalJobs = await Job.countDocuments({ user: userId, isDeleted: { $ne: true } })
   const matchedJobs = matchedJobIds.size
   const unmatchedJobs = Math.max(0, totalJobs - matchedJobs)

@@ -18,6 +18,7 @@ import {
   PRACTICE_DIFFICULTY_LABEL,
   PRACTICE_DIFFICULTY_VARIANT,
 } from '../../utils/constants.js'
+import { getInitialActiveIndex } from '../../utils/practiceSession.js'
 
 // Backend contract (source of truth):
 //   POST /api/interviews/:id/practice/:pid/answers { questionIndex, answer }
@@ -31,7 +32,14 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
   const answeredCount = answers.filter((answer) => answer && answer.evaluation).length
   const completed = session.status === 'completed'
 
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(() => getInitialActiveIndex(session?.answers))
+  const [prevSessionId, setPrevSessionId] = useState(session?._id)
+
+  if (session?._id !== prevSessionId) {
+    setPrevSessionId(session?._id)
+    setActiveIndex(getInitialActiveIndex(session?.answers))
+  }
+
   const [draft, setDraft] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
@@ -91,7 +99,7 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
             {PRACTICE_STATUS_LABEL[session.status] || session.status}
           </Badge>
           <span className="text-sm text-muted-foreground">
-            {answeredCount} of {answers.length} answered
+            {answeredCount} of {answers.length} questions answered
           </span>
         </div>
       </div>
@@ -118,6 +126,15 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
             </Badge>
             {activeSlot.attemptCount > 0 && (
               <span className="text-xs text-muted-foreground">Attempt {activeSlot.attemptCount}</span>
+            )}
+            {activeSlot.evaluation ? (
+              <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700">
+                Evaluated
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-border text-muted-foreground">
+                Unanswered
+              </Badge>
             )}
           </div>
 
@@ -178,7 +195,7 @@ export default function PracticeSessionView({ interviewId, session, onSessionUpd
                     aria-label={
                       evaluated
                         ? `Question ${index + 1}, score ${slot.evaluation.score}`
-                        : `Question ${index + 1}`
+                        : `Question ${index + 1}, unanswered`
                     }
                     className={cn(
                       'inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 font-mono text-sm tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

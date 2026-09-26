@@ -6,6 +6,7 @@ import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import ApplicationCard from '../components/applications/ApplicationCard.jsx'
 import { Input } from '../components/ui/input.jsx'
 import { Select } from '../components/ui/select.jsx'
@@ -26,6 +27,7 @@ export default function ApplicationsPage() {
   const [loadError, setLoadError] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   // Lightweight debounce (no library).
   useEffect(() => {
@@ -74,14 +76,18 @@ export default function ApplicationsPage() {
     }
   }, [status, search, page, reloadKey])
 
-  const handleDelete = async (application) => {
-    if (!window.confirm(`Delete this application for "${application.job ? application.job.title : 'a removed job'}"? This cannot be undone.`)) {
-      return
-    }
-    setDeletingId(application._id)
+  const handleDelete = (application) => {
+    setDeleteTarget(application)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const targetId = deleteTarget._id
+    setDeletingId(targetId)
+    setDeleteTarget(null)
     setActionError(null)
     try {
-      await deleteApplicationApi(application._id)
+      await deleteApplicationApi(targetId)
       // Deleting the last item on the last page would leave `page` past
       // totalPages; step back one page instead of reloading the stale page.
       if (applications.length === 1 && page > 1) {
@@ -218,6 +224,22 @@ export default function ApplicationsPage() {
           onChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this application?"
+        description={
+          deleteTarget
+            ? `Delete this application for "${deleteTarget.job ? deleteTarget.job.title : 'a removed job'}"? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   )
 }

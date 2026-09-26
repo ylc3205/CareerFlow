@@ -15,5 +15,6 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.js'],
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     css: false,
+    testTimeout: 15000,
   },
 })

@@ -6,6 +6,7 @@ import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import InterviewCard from '../components/interviews/InterviewCard.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { Input } from '../components/ui/input.jsx'
@@ -26,6 +27,7 @@ export default function InterviewsPage() {
   const [loadError, setLoadError] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   // Lightweight debounce (no library).
   useEffect(() => {
@@ -74,12 +76,18 @@ export default function InterviewsPage() {
     }
   }, [status, search, page, reloadKey])
 
-  const handleDelete = async (interview) => {
-    if (!window.confirm(`Delete interview "${interview.title}"? This cannot be undone.`)) return
-    setDeletingId(interview._id)
+  const handleDelete = (interview) => {
+    setDeleteTarget(interview)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const targetId = deleteTarget._id
+    setDeletingId(targetId)
+    setDeleteTarget(null)
     setActionError(null)
     try {
-      await deleteInterviewApi(interview._id)
+      await deleteInterviewApi(targetId)
       // Deleting the last item on the last page would leave `page` past
       // totalPages; step back one page instead of reloading the stale page.
       if (interviews.length === 1 && page > 1) {
@@ -183,6 +191,22 @@ export default function InterviewsPage() {
           onChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this interview?"
+        description={
+          deleteTarget
+            ? `Delete interview "${deleteTarget.title}"? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import * as interviewPreparationController from '../controllers/interviewPrepara
 import * as practiceSessionController from '../controllers/practiceSession.controller.js'
 import protect from '../middlewares/auth.middleware.js'
 import validate from '../middlewares/validate.middleware.js'
+import { aiLimiter } from '../middlewares/rateLimiter.middleware.js'
 import {
   createInterviewSchema,
   updateInterviewSchema,
@@ -25,13 +26,14 @@ router.get('/:id', interviewController.getInterview)
 router.patch('/:id', validate(updateInterviewSchema), interviewController.updateInterview)
 router.delete('/:id', interviewController.deleteInterview)
 router.get('/:id/preparation', interviewPreparationController.getPreparation)
-router.post('/:id/preparation', interviewPreparationController.generatePreparation)
+router.post('/:id/preparation', aiLimiter, interviewPreparationController.generatePreparation)
 
 router.post('/:id/practice', practiceSessionController.createSession)
 router.get('/:id/practice', practiceSessionController.listSessions)
 router.get('/:id/practice/:pid', practiceSessionController.getSession)
 router.post(
   '/:id/practice/:pid/answers',
+  aiLimiter,
   validate(submitAnswerSchema),
   practiceSessionController.submitAnswer
 )

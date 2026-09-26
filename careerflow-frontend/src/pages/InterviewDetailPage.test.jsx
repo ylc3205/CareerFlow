@@ -94,7 +94,7 @@ describe('InterviewDetailPage', () => {
     })
   })
 
-  it('handles interview deletion and navigation', async () => {
+  it('handles interview deletion and navigation via ConfirmDialog', async () => {
     const user = userEvent.setup()
     interviewsApi.getInterviewApi.mockResolvedValueOnce({
       data: { interview: mockInterview },
@@ -117,7 +117,12 @@ describe('InterviewDetailPage', () => {
     const deleteBtn = screen.getByRole('button', { name: 'Delete' })
     await user.click(deleteBtn)
 
-    expect(window.confirm).toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Delete this interview?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
     await waitFor(() => {
       expect(interviewsApi.deleteInterviewApi).toHaveBeenCalledWith('int_1')
       expect(screen.getByText('Interviews List Page')).toBeInTheDocument()

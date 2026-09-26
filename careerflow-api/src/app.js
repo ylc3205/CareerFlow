@@ -14,9 +14,33 @@ import aiAnalysisRoutes from './routes/aiAnalysis.routes.js'
 import analyticsRoutes from './routes/analytics.routes.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
 
+export const parseAllowedOrigins = (raw) => {
+  if (!raw) return ['http://localhost:5173']
+  return raw
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean)
+}
+
+export const getCorsOriginDelegate = (rawOrigins = process.env.CLIENT_URL) => {
+  const allowedOrigins = parseAllowedOrigins(rawOrigins)
+  return (origin, callback) => {
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    return callback(new Error('Not allowed by CORS'))
+  }
+}
+
 const app = express()
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }))
+app.use(
+  cors({
+    origin: (origin, callback) => getCorsOriginDelegate()(origin, callback),
+    credentials: true,
+  })
+)
 app.use(express.json())
 app.use(cookieParser())
 

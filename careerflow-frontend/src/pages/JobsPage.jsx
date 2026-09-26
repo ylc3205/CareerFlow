@@ -6,6 +6,7 @@ import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import EmptyState from '../components/EmptyState.jsx'
 import Pagination from '../components/Pagination.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import JobCard from '../components/jobs/JobCard.jsx'
 import JobFilters from '../components/jobs/JobFilters.jsx'
 import { Button } from '../components/ui/button.jsx'
@@ -24,6 +25,7 @@ export default function JobsPage() {
   const [loadError, setLoadError] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   // Lightweight debounce (no library).
   useEffect(() => {
@@ -72,12 +74,18 @@ export default function JobsPage() {
     }
   }, [status, search, page, reloadKey])
 
-  const handleDelete = async (job) => {
-    if (!window.confirm(`Delete "${job.title}"? This cannot be undone.`)) return
-    setDeletingId(job._id)
+  const handleDelete = (job) => {
+    setDeleteTarget(job)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const targetId = deleteTarget._id
+    setDeletingId(targetId)
+    setDeleteTarget(null)
     setActionError(null)
     try {
-      await deleteJobApi(job._id)
+      await deleteJobApi(targetId)
       // Deleting the last item on the last page would leave `page` past
       // totalPages; step back one page instead of reloading the stale page.
       if (jobs.length === 1 && page > 1) {
@@ -168,6 +176,22 @@ export default function JobsPage() {
           onChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this job?"
+        description={
+          deleteTarget
+            ? `Delete "${deleteTarget.title}"? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   )
 }

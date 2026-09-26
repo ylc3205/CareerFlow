@@ -165,7 +165,7 @@ describe('InterviewsPage', () => {
     })
   })
 
-  it('handles delete interview flow', async () => {
+  it('handles delete interview flow via ConfirmDialog', async () => {
     const user = userEvent.setup()
     interviewsApi.listInterviewsApi.mockResolvedValue({
       data: {
@@ -188,7 +188,12 @@ describe('InterviewsPage', () => {
     const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
     await user.click(deleteButtons[0])
 
-    expect(window.confirm).toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Delete this interview?' })
+    expect(dialog).toBeInTheDocument()
+
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await user.click(dialogConfirmBtn)
+
     await waitFor(() => {
       expect(interviewsApi.deleteInterviewApi).toHaveBeenCalledWith('int_1')
     })

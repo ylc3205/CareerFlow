@@ -2,7 +2,8 @@ import catchAsync from '../utils/catchAsync.js'
 import * as aiAnalysisService from '../services/aiAnalysis.service.js'
 
 const listAnalyses = catchAsync(async (req, res) => {
-  const analyses = await aiAnalysisService.listAnalyses(req.user.userId)
+  const { job } = req.query
+  const analyses = await aiAnalysisService.listAnalyses(req.user.userId, { job })
 
   res.status(200).json({
     success: true,

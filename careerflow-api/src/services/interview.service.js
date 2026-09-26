@@ -41,6 +41,7 @@ const listInterviews = async (userId, query = {}) => {
     const regex = new RegExp(escapeRegExp(String(search).trim()), 'i')
     const matchingJobs = await Job.find({
       user: userId,
+      isDeleted: { $ne: true },
       $or: [{ title: regex }, { company: regex }],
     }).select('_id')
     const jobIds = matchingJobs.map((job) => job._id)

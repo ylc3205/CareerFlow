@@ -5,6 +5,7 @@ import { Badge } from '../ui/badge.jsx'
 import { Button } from '../ui/button.jsx'
 import ErrorMessage from '../ErrorMessage.jsx'
 import EmptyState from '../EmptyState.jsx'
+import ConfirmDialog from '../ConfirmDialog.jsx'
 import PracticeSessionView from './PracticeSessionView.jsx'
 import {
   listPracticeSessionsApi,
@@ -59,8 +60,18 @@ export default function PracticeSection({ interviewId }) {
   const [createError, setCreateError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const [activeSession, setActiveSession] = useState(null)
+  const [prevInterviewId, setPrevInterviewId] = useState(interviewId)
+
+  if (interviewId !== prevInterviewId) {
+    setPrevInterviewId(interviewId)
+    setActiveSession(null)
+    setCreateError(null)
+    setDeleteError(null)
+    setDeleteTarget(null)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -98,14 +109,20 @@ export default function PracticeSection({ interviewId }) {
     }
   }
 
-  const handleDelete = async (session) => {
-    if (!window.confirm('Delete this practice session? This cannot be undone.')) return
-    setDeletingId(session._id)
+  const handleDelete = (session) => {
+    setDeleteTarget(session)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    const sessionId = deleteTarget._id
+    setDeletingId(sessionId)
+    setDeleteTarget(null)
     setDeleteError(null)
     try {
-      await deletePracticeSessionApi(interviewId, session._id)
-      if (activeSession && activeSession._id === session._id) setActiveSession(null)
-      setSessions((prev) => prev.filter((item) => item._id !== session._id))
+      await deletePracticeSessionApi(interviewId, sessionId)
+      if (activeSession && activeSession._id === sessionId) setActiveSession(null)
+      setSessions((prev) => prev.filter((item) => item._id !== sessionId))
     } catch (err) {
       setDeleteError({ message: err.message })
     } finally {
@@ -176,6 +193,7 @@ export default function PracticeSection({ interviewId }) {
 
       {activeSession ? (
         <PracticeSessionView
+          key={activeSession._id}
           interviewId={interviewId}
           session={activeSession}
           onSessionUpdate={handleSessionUpdate}
@@ -221,7 +239,17 @@ export default function PracticeSection({ interviewId }) {
                       )}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Button size="sm" onClick={() => setActiveSession(session)}>
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveSession(session)}
+                        aria-label={
+                          session.status === 'completed'
+                            ? 'View results'
+                            : session.status === 'not_started'
+                              ? 'Start'
+                              : 'Continue session'
+                        }
+                      >
                         {session.status === 'completed'
                           ? 'View results'
                           : session.status === 'not_started'
@@ -250,6 +278,18 @@ export default function PracticeSection({ interviewId }) {
           })}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this practice session?"
+        description="This will permanently delete this practice session and all its question evaluations. This cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </section>
   )
 }

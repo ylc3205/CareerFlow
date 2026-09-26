@@ -11,7 +11,8 @@ import AIdeaInputForm from '../components/careerDirections/AIdeaInputForm.jsx'
 import AIBackgroundInputForm from '../components/careerDirections/AIBackgroundInputForm.jsx'
 import TemplateInputForm from '../components/careerDirections/TemplateInputForm.jsx'
 import CareerDirectionPreview from '../components/careerDirections/CareerDirectionPreview.jsx'
-import CareerDirectionForm, { hydrateCareerDirectionForm } from '../components/careerDirections/CareerDirectionForm.jsx'
+import CareerDirectionForm from '../components/careerDirections/CareerDirectionForm.jsx'
+import { hydrateCareerDirectionForm } from '../utils/careerDirectionForm.js'
 import { generateCareerDirectionApi, createCareerDirectionApi } from '../api/careerDirections.api.js'
 
 const INITIAL_AI_VALUES = {

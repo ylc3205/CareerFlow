@@ -121,43 +121,46 @@ describe('JobsPage', () => {
     })
   })
 
-  it('deletes a job after confirmation', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  it('deletes a job after confirmation via ConfirmDialog', async () => {
     mocks.list.mockResolvedValue({ data: { jobs: [jobA], pagination: pagination() } })
     renderPage()
     await screen.findByText('Backend Developer')
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
-    expect(window.confirm).toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Delete this job?' })
+    expect(dialog).toBeInTheDocument()
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await userEvent.click(dialogConfirmBtn)
     expect(mocks.delete).toHaveBeenCalledWith('job_1')
     await waitFor(() => {
       expect(mocks.list).toHaveBeenCalledTimes(2)
     })
-    confirmSpy.mockRestore()
   })
 
-  it('does not delete when confirmation is cancelled', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('does not delete when confirmation is cancelled via ConfirmDialog', async () => {
     mocks.list.mockResolvedValue({ data: { jobs: [jobA], pagination: pagination() } })
     renderPage()
     await screen.findByText('Backend Developer')
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete this job?' })
+    expect(dialog).toBeInTheDocument()
+    const cancelBtn = screen.getByRole('button', { name: 'Cancel' })
+    await userEvent.click(cancelBtn)
     expect(mocks.delete).not.toHaveBeenCalled()
-    confirmSpy.mockRestore()
   })
 
   it('shows a delete error message on failure', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     mocks.delete.mockRejectedValue(new Error('Delete failed'))
     mocks.list.mockResolvedValue({ data: { jobs: [jobA], pagination: pagination() } })
     renderPage()
     await screen.findByText('Backend Developer')
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete this job?' })
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await userEvent.click(dialogConfirmBtn)
     expect(await screen.findByText('Delete failed')).toBeInTheDocument()
-    confirmSpy.mockRestore()
   })
 
   it('steps back one page when the last item on the last page is deleted', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     // Page 2 with a single job.
     mocks.list.mockResolvedValue({
       data: { jobs: [jobA], pagination: pagination(2, 2, 1) },
@@ -166,10 +169,12 @@ describe('JobsPage', () => {
     await screen.findByText('Backend Developer')
     mocks.list.mockClear()
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete this job?' })
+    const dialogConfirmBtn = dialog.querySelector('button.bg-destructive, button:last-child')
+    await userEvent.click(dialogConfirmBtn)
     await waitFor(() => {
       expect(mocks.list).toHaveBeenCalledWith({ status: '', search: '', page: 1 })
     })
-    confirmSpy.mockRestore()
   })
 
   it('shows an error state with a retry button on load failure', async () => {

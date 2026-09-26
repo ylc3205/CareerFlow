@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
+import ConfirmDialog from '../components/ConfirmDialog.jsx'
 import { Badge } from '../components/ui/badge.jsx'
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
@@ -40,6 +41,7 @@ export default function ApplicationDetailPage() {
 
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   // Reset per-application transient state whenever the route id changes.
   // Without this, stale editing / interview modal / error state from a previously
@@ -59,6 +61,7 @@ export default function ApplicationDetailPage() {
     setInterviewsError(null)
     setDeleting(false)
     setDeleteError(null)
+    setConfirmDeleteOpen(false)
   }, [id])
 
   useEffect(() => {
@@ -131,8 +134,12 @@ export default function ApplicationDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this application? This cannot be undone.')) return
+  const handleDelete = () => {
+    setConfirmDeleteOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    setConfirmDeleteOpen(false)
     setDeleting(true)
     setDeleteError(null)
     try {
@@ -275,55 +282,75 @@ export default function ApplicationDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div className="space-y-1.5">
-                  <CardTitle>Interviews</CardTitle>
+                  <CardTitle>{addingInterview ? 'Schedule Interview' : 'Interviews'}</CardTitle>
                 </div>
-                {!addingInterview && (
+                {!addingInterview ? (
                   <Button variant="ghost" size="sm" onClick={() => setAddingInterview(true)}>
                     Add interview
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={cancelInline}>
+                    Cancel
                   </Button>
                 )}
               </CardHeader>
               <CardContent className="pt-0">
-                {interviewsLoading && <Loading label="Loading interviews…" />}
-                {!interviewsLoading && interviewsError && (
-                  <div className="flex gap-3">
-                    <ErrorMessage title="Could not load interviews" message={interviewsError.message} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setInterviewsReloadKey((key) => key + 1)}
-                    >
-                      Retry
-                    </Button>
+                {addingInterview ? (
+                  <div className="pt-2">
+                    <InterviewForm
+                      key="new-interview"
+                      applicationId={application._id}
+                      initialValues={emptyInterviewForm()}
+                      submitLabel="Add interview"
+                      onSubmit={handleInterviewSubmit}
+                      submitting={savingInterview}
+                      apiError={interviewFormError}
+                    />
                   </div>
-                )}
-                {!interviewsLoading && !interviewsError && interviews.length === 0 && (
-                  <EmptyState title="No interviews yet" description="Add an interview to track it here." />
-                )}
-                {!interviewsLoading && !interviewsError && interviews.length > 0 && (
-                  <ul className="space-y-3">
-                    {interviews.map((interview) => (
-                      <li
-                        key={interview._id}
-                        className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            to={`/interviews/${interview._id}`}
-                            className="font-semibold text-foreground hover:text-primary"
+                ) : (
+                  <>
+                    {interviewsLoading && <Loading label="Loading interviews…" />}
+                    {!interviewsLoading && interviewsError && (
+                      <div className="flex gap-3">
+                        <ErrorMessage title="Could not load interviews" message={interviewsError.message} />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setInterviewsReloadKey((key) => key + 1)}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {!interviewsLoading && !interviewsError && interviews.length === 0 && (
+                      <EmptyState title="No interviews yet" description="Add an interview to track it here." />
+                    )}
+                    {!interviewsLoading && !interviewsError && interviews.length > 0 && (
+                      <ul className="space-y-3">
+                        {interviews.map((interview) => (
+                          <li
+                            key={interview._id}
+                            className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
                           >
-                            {interview.title}
-                          </Link>
-                          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>
-                              {interview.status}
-                            </Badge>
-                            {interview.scheduledDate && <span>{formatDisplayDate(interview.scheduledDate)}</span>}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                            <div className="min-w-0 flex-1">
+                              <Link
+                                to={`/interviews/${interview._id}`}
+                                className="font-semibold text-foreground hover:text-primary"
+                              >
+                                {interview.title}
+                              </Link>
+                              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                                <Badge variant={INTERVIEW_STATUS_VARIANT[interview.status] || 'default'}>
+                                  {interview.status}
+                                </Badge>
+                                {interview.scheduledDate && <span>{formatDisplayDate(interview.scheduledDate)}</span>}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -359,17 +386,16 @@ export default function ApplicationDetailPage() {
         </div>
       )}
 
-      {addingInterview && (
-        <InterviewForm
-          key="new-interview"
-          applicationId={application._id}
-          initialValues={emptyInterviewForm()}
-          submitLabel="Add interview"
-          onSubmit={handleInterviewSubmit}
-          submitting={savingInterview}
-          apiError={interviewFormError}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Delete this application?"
+        description="This will delete the application and all associated interview schedules and practice sessions. This cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={deleting}
+      />
     </div>
   )
 }

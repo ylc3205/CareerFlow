@@ -4,10 +4,11 @@ import PageHeader from '../components/PageHeader.jsx'
 import Loading from '../components/Loading.jsx'
 import ErrorMessage from '../components/ErrorMessage.jsx'
 import { Button } from '../components/ui/button.jsx'
-import CareerDirectionForm, {
+import CareerDirectionForm from '../components/careerDirections/CareerDirectionForm.jsx'
+import {
   emptyCareerDirectionForm,
   hydrateCareerDirectionForm,
-} from '../components/careerDirections/CareerDirectionForm.jsx'
+} from '../utils/careerDirectionForm.js'
 import {
   createCareerDirectionApi,
   getCareerDirectionApi,
