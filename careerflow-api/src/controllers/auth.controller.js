@@ -39,11 +39,7 @@ const refresh = catchAsync(async (req, res) => {
 })
 
 const logout = catchAsync(async (req, res) => {
-  res.clearCookie(authService.REFRESH_COOKIE_NAME, {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-  })
+  res.clearCookie(authService.REFRESH_COOKIE_NAME, authService.getCookieOptions())
 
   res.status(200).json({
     success: true,
