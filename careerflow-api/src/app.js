@@ -29,6 +29,14 @@ export const getCorsOriginDelegate = (rawOrigins = process.env.CLIENT_URL) => {
     if (allowedOrigins.includes(origin)) {
       return callback(null, true)
     }
+    try {
+      const url = new URL(origin)
+      if (url.protocol === 'https:' && (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app')) {
+        return callback(null, true)
+      }
+    } catch {
+      // ignore invalid URL format
+    }
     return callback(new Error('Not allowed by CORS'))
   }
 }
