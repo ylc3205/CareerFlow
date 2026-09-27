@@ -11,10 +11,16 @@
 // - On a 401 from a protected request, refresh is attempted ONCE and the original
 //   request is retried with the new token. Refresh itself never re-triggers refresh.
 
-const DEFAULT_API_URL = 'http://localhost:5000/api'
+const DEFAULT_API_URL = import.meta.env.DEV
+  ? 'http://localhost:5000/api'
+  : 'https://careerflow-api-nkke.onrender.com/api'
 
 const normalizeApiUrl = (raw) => {
-  const trimmed = String(raw || DEFAULT_API_URL).replace(/\/+$/, '')
+  let val = raw || DEFAULT_API_URL
+  if (typeof val === 'string' && val.includes('careerflow-api-mkke')) {
+    val = val.replace('careerflow-api-mkke', 'careerflow-api-nkke')
+  }
+  const trimmed = String(val).replace(/\/+$/, '')
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`
 }
 
