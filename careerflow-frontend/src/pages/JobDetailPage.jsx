@@ -229,73 +229,55 @@ export default function JobDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         <div className="min-w-0 space-y-6">
-          {job.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.description}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {job.requirements && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Requirements</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.requirements}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {job.responsibilities && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Responsibilities</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.responsibilities}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {job.skills && job.skills.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Skills</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {job.skills.map((skill) => (
-                    <Badge key={skill} variant="outline" className="rounded-full">
-                      {skill}
-                    </Badge>
-                  ))}
+          {(job.description || job.requirements || job.responsibilities || (job.skills && job.skills.length > 0) || job.notes) && (
+            <Card className="divide-y divide-border/60">
+              {job.description && (
+                <div className="space-y-2 p-5">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">Description</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.description}</p>
                 </div>
-              </CardContent>
+              )}
+
+              {job.requirements && (
+                <div className="space-y-2 p-5">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">Requirements</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.requirements}</p>
+                </div>
+              )}
+
+              {job.responsibilities && (
+                <div className="space-y-2 p-5">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">Responsibilities</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{job.responsibilities}</p>
+                </div>
+              )}
+
+              {job.skills && job.skills.length > 0 && (
+                <div className="space-y-2 p-5">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {job.skills.map((skill) => (
+                      <Badge key={skill} variant="outline" className="rounded-full">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {job.notes && (
+                <div className="space-y-2 p-5">
+                  <h3 className="text-sm font-semibold tracking-tight text-foreground">Notes</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    <strong className="text-foreground">Notes:</strong> {job.notes}
+                  </p>
+                </div>
+              )}
             </Card>
           )}
 
-          {job.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  <strong className="text-foreground">Notes:</strong> {job.notes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardContent className="pt-0">
-              <JobFitAnalysis analysis={match} analyzing={analyzing} error={matchError} onAnalyze={handleAnalyze} />
-            </CardContent>
+          <Card className="p-5">
+            <JobFitAnalysis analysis={match} analyzing={analyzing} error={matchError} onAnalyze={handleAnalyze} />
           </Card>
         </div>
 

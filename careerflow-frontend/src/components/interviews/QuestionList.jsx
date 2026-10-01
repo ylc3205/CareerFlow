@@ -4,14 +4,17 @@ import { PRACTICE_DIFFICULTY_LABEL, PRACTICE_DIFFICULTY_VARIANT } from '../../ut
 
 export default function QuestionList({ questions }) {
   return (
-    <ol className="space-y-4" aria-label="Interview preparation questions">
+    <ol
+      className="divide-y divide-border/60 rounded-xl border border-border/80 bg-card shadow-sm"
+      aria-label="Interview preparation questions"
+    >
       {questions.map((item, index) => (
         <li
           key={index}
-          className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5"
+          className="p-4 transition-colors hover:bg-secondary/30 sm:p-5"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm tabular-nums text-muted-foreground">{index + 1}.</span>
+            <span className="font-mono text-xs font-semibold tabular-nums text-muted-foreground">{index + 1}.</span>
             <Badge variant={PRACTICE_CATEGORY_VARIANT[item.category] || 'default'}>
               {PRACTICE_CATEGORY_LABEL[item.category] || item.category}
             </Badge>
@@ -19,7 +22,7 @@ export default function QuestionList({ questions }) {
               {PRACTICE_DIFFICULTY_LABEL[item.difficulty] || item.difficulty}
             </Badge>
           </div>
-          <p className="mt-3 text-base font-medium leading-relaxed text-foreground">{item.question}</p>
+          <p className="mt-2.5 text-sm font-medium leading-relaxed text-foreground">{item.question}</p>
         </li>
       ))}
     </ol>

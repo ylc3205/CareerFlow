@@ -227,6 +227,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <EmptyState
+              embedded
               icon={<Send className="h-6 w-6" />}
               title="No applications yet"
               description="Apply to a job to start building your pipeline."
@@ -286,6 +287,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <EmptyState
+                embedded
                 icon={<CalendarClock className="h-6 w-6" />}
                 title="No upcoming interview"
                 description="Schedule interviews for your applications and they will appear here."
@@ -359,6 +361,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <EmptyState
+                embedded
                 icon={<Target className="h-6 w-6" />}
                 title="No practice sessions yet"
                 description="Generate questions for an interview and practice to start building your analytics."

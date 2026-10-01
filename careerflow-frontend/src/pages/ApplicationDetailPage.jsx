@@ -323,19 +323,19 @@ export default function ApplicationDetailPage() {
                       </div>
                     )}
                     {!interviewsLoading && !interviewsError && interviews.length === 0 && (
-                      <EmptyState title="No interviews yet" description="Add an interview to track it here." />
+                      <EmptyState embedded title="No interviews yet" description="Add an interview to track it here." />
                     )}
                     {!interviewsLoading && !interviewsError && interviews.length > 0 && (
-                      <ul className="space-y-3">
+                      <ul className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/80 bg-card">
                         {interviews.map((interview) => (
                           <li
                             key={interview._id}
-                            className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
+                            className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-secondary/30"
                           >
                             <div className="min-w-0 flex-1">
                               <Link
                                 to={`/interviews/${interview._id}`}
-                                className="font-semibold text-foreground hover:text-primary"
+                                className="font-semibold text-foreground transition-colors hover:text-primary"
                               >
                                 {interview.title}
                               </Link>

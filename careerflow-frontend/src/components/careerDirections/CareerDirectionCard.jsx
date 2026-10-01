@@ -48,19 +48,23 @@ export default function CareerDirectionCard({ direction, onDelete, deleting = fa
         <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{direction.description}</p>
       )}
 
+      {rolesText && (
+        <p className="mt-1 text-xs font-medium text-muted-foreground truncate">{rolesText}</p>
+      )}
+
       {skills.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {visibleSkills.map((skill) => (
-            <Badge key={skill} variant="outline">{skill}</Badge>
+            <Badge key={skill} variant="secondary" className="font-normal text-xs text-secondary-foreground">
+              {skill}
+            </Badge>
           ))}
           {remainingCount > 0 && (
-            <Badge variant="outline">+{remainingCount} more</Badge>
+            <Badge variant="outline" className="font-normal text-xs text-muted-foreground">
+              +{remainingCount} more
+            </Badge>
           )}
         </div>
-      )}
-
-      {rolesText && (
-        <p className="mt-2 text-sm text-muted-foreground truncate">{rolesText}</p>
       )}
 
       <div className="mt-4 flex flex-1 items-end justify-end gap-1 border-t border-border pt-3">

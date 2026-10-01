@@ -237,17 +237,9 @@ export default function InterviewDetailPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-5">
-                  <PreparationSection interviewId={interview._id} />
-                </CardContent>
-              </Card>
+              <PreparationSection interviewId={interview._id} />
 
-              <Card>
-                <CardContent className="p-5">
-                  <PracticeSection interviewId={interview._id} />
-                </CardContent>
-              </Card>
+              <PracticeSection interviewId={interview._id} />
             </>
           )}
         </div>
