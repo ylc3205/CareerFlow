@@ -36,10 +36,12 @@ const listCareerDirections = async (userId, query = {}) => {
   if (searchFilter) Object.assign(filter, searchFilter)
 
   const total = await CareerDirection.countDocuments(filter)
-  const careerDirections = await CareerDirection.find(filter)
+  const cdQuery = CareerDirection.find(filter)
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
+  const careerDirections =
+    typeof cdQuery.lean === 'function' ? await cdQuery.lean() : await cdQuery
 
   return {
     careerDirections,

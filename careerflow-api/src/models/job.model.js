@@ -20,7 +20,7 @@ const jobSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
+      // index: true removed — covered by compound indexes with user prefix
     },
     title: { type: String, required: true, trim: true },
     company: { type: String, required: true, trim: true },
@@ -53,6 +53,10 @@ const jobSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+
+// ESR compound indexes for active job listing and status filtering
+jobSchema.index({ user: 1, isDeleted: 1, createdAt: -1 })
+jobSchema.index({ user: 1, isDeleted: 1, status: 1, createdAt: -1 })
 
 // Compound unique index: one user cannot save the same URL twice across active jobs.
 // Uses $type: 'string' and isDeleted: false in partialFilterExpression:

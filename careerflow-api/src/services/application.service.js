@@ -5,6 +5,7 @@ import Interview from '../models/interview.model.js'
 import InterviewPreparation from '../models/interviewPreparation.model.js'
 import PracticeSession from '../models/practiceSession.model.js'
 import ApiError from '../utils/ApiError.js'
+import { runInTransaction } from '../utils/transaction.js'
 
 // Fields populated on job when returning applications.
 // Excludes: description, requirements, responsibilities, salary, notes,
@@ -48,11 +49,15 @@ const listApplications = async (userId, query = {}) => {
   let searchJobIds = null
   if (search !== undefined && String(search).trim() !== '') {
     const regex = new RegExp(escapeRegExp(String(search).trim()), 'i')
-    const matchingJobs = await Job.find({
+    const matchingJobsQuery = Job.find({
       user: userId,
       isDeleted: { $ne: true },
       $or: [{ title: regex }, { company: regex }],
     }).select('_id')
+    const matchingJobs =
+      typeof matchingJobsQuery.lean === 'function'
+        ? await matchingJobsQuery.lean()
+        : await matchingJobsQuery
     searchJobIds = matchingJobs.map((job) => job._id)
     if (searchJobIds.length === 0) {
       return {
@@ -67,11 +72,15 @@ const listApplications = async (userId, query = {}) => {
   if (searchJobIds) filter.job = { $in: searchJobIds }
 
   const total = await Application.countDocuments(filter)
-  const applications = await Application.find(filter)
+  const applicationsQuery = Application.find(filter)
     .sort({ createdAt: -1 })
     .skip((normalizedPage - 1) * normalizedLimit)
     .limit(normalizedLimit)
     .populate('job', JOB_POPULATE_SELECT)
+  const applications =
+    typeof applicationsQuery.lean === 'function'
+      ? await applicationsQuery.lean()
+      : await applicationsQuery
 
   return {
     applications,
@@ -144,26 +153,55 @@ const updateApplication = async (userId, applicationId, data) => {
 
 const deleteApplication = async (userId, applicationId) => {
   validateObjectId(applicationId)
-  const application = await Application.findOne({
-    _id: applicationId,
-    user: userId,
+
+  await runInTransaction(async (session) => {
+    const appQuery = Application.findOne({
+      _id: applicationId,
+      user: userId,
+    })
+    const application =
+      session && typeof appQuery.session === 'function'
+        ? await appQuery.session(session)
+        : await appQuery
+
+    if (!application) {
+      throw new ApiError(404, 'Application not found')
+    }
+
+    // CASCADE: Remove child Interviews and their own children (Preparation + PracticeSessions).
+    const findInterviewsQuery = Interview.find({ user: userId, application: applicationId }).select('_id')
+    const interviews =
+      session && typeof findInterviewsQuery.session === 'function'
+        ? await findInterviewsQuery.session(session)
+        : await findInterviewsQuery
+
+    if (interviews.length > 0) {
+      const interviewIds = interviews.map((i) => i._id)
+      const prepFilter = { user: userId, interview: { $in: interviewIds } }
+      const sessFilter = { user: userId, interview: { $in: interviewIds } }
+      const intFilter = { _id: { $in: interviewIds }, user: userId }
+
+      if (session) {
+        await Promise.all([
+          InterviewPreparation.deleteMany(prepFilter, { session }),
+          PracticeSession.deleteMany(sessFilter, { session }),
+          Interview.deleteMany(intFilter, { session }),
+        ])
+      } else {
+        await Promise.all([
+          InterviewPreparation.deleteMany(prepFilter),
+          PracticeSession.deleteMany(sessFilter),
+          Interview.deleteMany(intFilter),
+        ])
+      }
+    }
+
+    if (session) {
+      await application.deleteOne({ session })
+    } else {
+      await application.deleteOne()
+    }
   })
-  if (!application) {
-    throw new ApiError(404, 'Application not found')
-  }
-
-  // CASCADE: Remove child Interviews and their own children (Preparation + PracticeSessions).
-  const interviews = await Interview.find({ user: userId, application: applicationId }).select('_id')
-  if (interviews.length > 0) {
-    const interviewIds = interviews.map((i) => i._id)
-    await Promise.all([
-      InterviewPreparation.deleteMany({ user: userId, interview: { $in: interviewIds } }),
-      PracticeSession.deleteMany({ user: userId, interview: { $in: interviewIds } }),
-      Interview.deleteMany({ _id: { $in: interviewIds }, user: userId }),
-    ])
-  }
-
-  await application.deleteOne()
 }
 
 export {

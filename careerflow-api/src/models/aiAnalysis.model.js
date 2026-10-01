@@ -53,6 +53,8 @@ const aiAnalysisSchema = new mongoose.Schema(
 
 // Compound unique index: at most one AI analysis per User + Job.
 aiAnalysisSchema.index({ user: 1, job: 1 }, { unique: true })
+// ESR compound index for user's analysis history listing
+aiAnalysisSchema.index({ user: 1, createdAt: -1 })
 // Job index: retained for queries filtering by job alone (cannot be served by compound index with user prefix).
 aiAnalysisSchema.index({ job: 1 })
 

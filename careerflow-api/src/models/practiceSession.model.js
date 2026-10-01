@@ -97,7 +97,8 @@ const practiceSessionSchema = new mongoose.Schema(
 )
 
 // Multiple practice sessions per interview are allowed (no unique constraint).
-practiceSessionSchema.index({ user: 1, interview: 1 })
+// ESR compound index for listing sessions of an interview in reverse-chronological order
+practiceSessionSchema.index({ user: 1, interview: 1, createdAt: -1 })
 // Phase 19 analytics/history read patterns.
 practiceSessionSchema.index({ user: 1, status: 1, createdAt: -1 })
 practiceSessionSchema.index({ user: 1, status: 1, completedAt: -1 })

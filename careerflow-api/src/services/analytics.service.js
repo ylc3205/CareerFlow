@@ -125,6 +125,10 @@ const loadSessions = async (
     })
   }
 
+  if (typeof query.lean === 'function') {
+    query = query.lean()
+  }
+
   return query
 }
 
@@ -213,7 +217,7 @@ const getHistory = async (userId, query = {}) => {
 
   const total = await PracticeSession.countDocuments(filter)
 
-  const sessions = await PracticeSession.find(filter)
+  const sessionsQuery = PracticeSession.find(filter)
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
@@ -229,6 +233,8 @@ const getHistory = async (userId, query = {}) => {
         },
       },
     })
+  const sessions =
+    typeof sessionsQuery.lean === 'function' ? await sessionsQuery.lean() : await sessionsQuery
 
   return {
     sessions: sessions.map(toHistoryItem),

@@ -21,7 +21,7 @@ const interviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
+      // index: true removed — covered by compound indexes with user prefix
     },
     application: {
       type: mongoose.Schema.Types.ObjectId,
@@ -71,6 +71,11 @@ const interviewSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+
+// ESR compound indexes for interview listing, filtering, and cascade lookups
+interviewSchema.index({ user: 1, createdAt: -1 })
+interviewSchema.index({ user: 1, status: 1, createdAt: -1 })
+interviewSchema.index({ user: 1, application: 1, createdAt: -1 })
 
 const Interview = mongoose.model('Interview', interviewSchema)
 

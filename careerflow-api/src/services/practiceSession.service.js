@@ -148,8 +148,10 @@ const listSessions = async (userId, interviewId) => {
   validateObjectId(interviewId, 'Invalid interview ID')
   await requireOwnedInterview(userId, interviewId)
 
-  const sessions = await PracticeSession.find({ user: userId, interview: interviewId })
+  const sessionsQuery = PracticeSession.find({ user: userId, interview: interviewId })
     .sort({ createdAt: -1 })
+  const sessions =
+    typeof sessionsQuery.lean === 'function' ? await sessionsQuery.lean() : await sessionsQuery
   return sessions
 }
 

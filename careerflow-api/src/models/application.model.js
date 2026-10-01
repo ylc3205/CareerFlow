@@ -47,6 +47,10 @@ const applicationSchema = new mongoose.Schema(
 // Two different users can both apply to the same job.
 applicationSchema.index({ user: 1, job: 1 }, { unique: true })
 
+// ESR compound indexes for listing and status filtering
+applicationSchema.index({ user: 1, createdAt: -1 })
+applicationSchema.index({ user: 1, status: 1, createdAt: -1 })
+
 const Application = mongoose.model('Application', applicationSchema)
 
 export default Application

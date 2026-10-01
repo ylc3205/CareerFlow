@@ -17,10 +17,12 @@ const listAnalyses = async (userId, filter = {}) => {
     query.job = filter.job
   }
 
-  const analyses = await AIAnalysis.find(query)
+  const analysesQuery = AIAnalysis.find(query)
     .sort({ createdAt: -1 })
     .populate('job', JOB_POPULATE_SELECT)
     .select('-user -model -provider -__v')
+  const analyses =
+    typeof analysesQuery.lean === 'function' ? await analysesQuery.lean() : await analysesQuery
 
   // Filter out analyses whose populated Job is null/undefined or soft-deleted
   return analyses.filter((a) => a.job && a.job._id && a.job.isDeleted !== true)
@@ -32,7 +34,9 @@ const jobRef = (analysis) => ({
 })
 
 const getSummary = async (userId) => {
-  const analyses = await AIAnalysis.find({ user: userId }).populate('job', JOB_POPULATE_SELECT)
+  const summaryQuery = AIAnalysis.find({ user: userId }).populate('job', JOB_POPULATE_SELECT)
+  const analyses =
+    typeof summaryQuery.lean === 'function' ? await summaryQuery.lean() : await summaryQuery
 
   // Ignore analyses whose populated Job is null/undefined or soft-deleted
   const activeAnalyses = analyses.filter((a) => a.job && a.job._id && a.job.isDeleted !== true)

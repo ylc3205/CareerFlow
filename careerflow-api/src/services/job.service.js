@@ -62,10 +62,11 @@ const listJobs = async (userId, query = {}) => {
   if (searchFilter) Object.assign(filter, searchFilter)
 
   const total = await Job.countDocuments(filter)
-  const jobs = await Job.find(filter)
+  const jobsQuery = Job.find(filter)
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
+  const jobs = typeof jobsQuery.lean === 'function' ? await jobsQuery.lean() : await jobsQuery
 
   return {
     jobs,
