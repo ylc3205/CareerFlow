@@ -5,6 +5,7 @@ import {
   createJobApi,
   updateJobApi,
   deleteJobApi,
+  getJobContextApi,
   matchJobApi,
 } from './jobs.api.js'
 
@@ -107,6 +108,12 @@ describe('jobs.api', () => {
       method: 'POST',
       body: {},
     })
+  })
+
+  it('getJobContextApi fetches job context by id', async () => {
+    mocks.request.mockResolvedValue({ status: 200, data: { job: {}, application: null, match: null, careerDirections: [] } })
+    await getJobContextApi('job_1')
+    expect(mocks.request).toHaveBeenCalledWith({ path: '/jobs/job_1/context', method: 'GET' })
   })
 
   it('does not make real HTTP requests (client.request is mocked)', async () => {

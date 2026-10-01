@@ -36,7 +36,15 @@ const listCareerDirections = async (userId, query = {}) => {
   if (searchFilter) Object.assign(filter, searchFilter)
 
   const total = await CareerDirection.countDocuments(filter)
-  const cdQuery = CareerDirection.find(filter)
+  let cdQuery = CareerDirection.find(filter)
+  if (typeof cdQuery.select === 'function') {
+    if (query.fields === 'minimal') {
+      cdQuery = cdQuery.select('_id title')
+    } else {
+      cdQuery = cdQuery.select('-generationMetadata -rationale')
+    }
+  }
+  cdQuery = cdQuery
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)

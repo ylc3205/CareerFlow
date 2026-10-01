@@ -88,7 +88,11 @@ const listInterviews = async (userId, query = {}) => {
   }
 
   const total = await Interview.countDocuments(filter)
-  const interviewsQuery = Interview.find(filter)
+  let interviewsQuery = Interview.find(filter)
+  if (typeof interviewsQuery.select === 'function') {
+    interviewsQuery = interviewsQuery.select('-notes -feedback')
+  }
+  interviewsQuery = interviewsQuery
     .sort({ createdAt: -1 })
     .skip((normalizedPage - 1) * normalizedLimit)
     .limit(normalizedLimit)

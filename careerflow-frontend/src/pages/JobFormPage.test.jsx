@@ -71,9 +71,9 @@ describe('JobFormPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create job' }))
     await waitFor(() => {
       expect(mocks.create).toHaveBeenCalledTimes(1)
+      expect(screen.getByTestId('location')).toHaveTextContent('/jobs/job_created')
     })
     expect(mocks.create.mock.calls[0][0]).toMatchObject({ title: 'Backend Developer', company: 'VNG' })
-    expect(screen.getByTestId('location')).toHaveTextContent('/jobs/job_created')
   })
 
   it('updates a job and navigates to its detail page', async () => {
@@ -83,8 +83,8 @@ describe('JobFormPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
     await waitFor(() => {
       expect(mocks.update).toHaveBeenCalledWith('job_1', expect.any(Object))
+      expect(screen.getByTestId('location')).toHaveTextContent('/jobs/job_1')
     })
-    expect(screen.getByTestId('location')).toHaveTextContent('/jobs/job_1')
   })
 
   it('create mode does not retain stale initialValues after edit mode', async () => {

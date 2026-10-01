@@ -6,6 +6,7 @@ import JobDetailPage from './JobDetailPage.jsx'
 
 const mocks = vi.hoisted(() => ({
   getJob: vi.fn(),
+  getJobContext: vi.fn(),
   deleteJob: vi.fn(),
   matchJob: vi.fn(),
   listAnalyses: vi.fn(),
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../api/jobs.api.js', () => ({
   getJobApi: mocks.getJob,
+  getJobContextApi: mocks.getJobContext,
   deleteJobApi: mocks.deleteJob,
   matchJobApi: mocks.matchJob,
 }))
@@ -101,6 +103,14 @@ const routerHarness = (path) =>
 describe('JobDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.getJobContext.mockImplementation(async (id) => ({
+      data: {
+        job: id === 'job_2' ? jobB : jobA,
+        application: null,
+        match: null,
+        careerDirections: [],
+      },
+    }))
     mocks.getJob.mockResolvedValue({ data: { job: jobA } })
     mocks.listDirections.mockResolvedValue({ data: { careerDirections: [] } })
     mocks.listAnalyses.mockResolvedValue({ data: { analyses: [] } })
@@ -111,12 +121,9 @@ describe('JobDetailPage', () => {
   })
 
   it('shows a loading state while fetching', async () => {
-    mocks.getJob.mockReturnValue(new Promise(() => {}))
+    mocks.getJobContext.mockReturnValue(new Promise(() => {}))
     routerHarness('/jobs/job_1')
     expect(screen.getByText('Loading job...')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(mocks.listDirections).toHaveBeenCalledWith({ limit: 100 })
-    })
   })
 
   it('renders the job to a successful load', async () => {
@@ -131,20 +138,24 @@ describe('JobDetailPage', () => {
   })
 
   it('shows a load error with a retry button on API failure', async () => {
-    mocks.getJob.mockRejectedValue(new Error('Could not load'))
+    mocks.getJobContext.mockRejectedValue(new Error('Could not load'))
     routerHarness('/jobs/job_1')
     expect(await screen.findByText('Could not load')).toBeInTheDocument()
     expect(screen.getByText('Could not load this job.')).toBeInTheDocument()
   })
 
   it('shows a not-found message when the job is null', async () => {
-    mocks.getJob.mockResolvedValue({ data: { job: null } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: null, application: null, match: null, careerDirections: [] },
+    })
     routerHarness('/jobs/job_1')
     expect(await screen.findByText('This job may have been deleted.')).toBeInTheDocument()
   })
 
   it('renders the career direction selector when directions exist', async () => {
-    mocks.listDirections.mockResolvedValue({ data: { careerDirections: [direction] } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: jobA, application: null, match: null, careerDirections: [direction] },
+    })
     routerHarness('/jobs/job_1')
     await screen.findByRole('heading', { name: 'Backend Developer' })
     const select = screen.getByRole('combobox')
@@ -165,7 +176,9 @@ describe('JobDetailPage', () => {
   })
 
   it('passes the selected careerDirectionId to the matching API', async () => {
-    mocks.listDirections.mockResolvedValue({ data: { careerDirections: [direction] } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: jobA, application: null, match: null, careerDirections: [direction] },
+    })
     const user = userEvent.setup()
     routerHarness('/jobs/job_1')
     await screen.findByRole('heading', { name: 'Backend Developer' })
@@ -213,13 +226,17 @@ describe('JobDetailPage', () => {
   })
 
   it('displays a cached match on load', async () => {
-    mocks.listAnalyses.mockResolvedValue({ data: { analyses: [analysisFor('job_1')] } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: jobA, application: null, match: analysisFor('job_1'), careerDirections: [] },
+    })
     routerHarness('/jobs/job_1')
     expect(await screen.findByLabelText('Score 88 out of 100')).toBeInTheDocument()
   })
 
   it('re-analyzes via the Re-analyze Fit button', async () => {
-    mocks.listAnalyses.mockResolvedValue({ data: { analyses: [analysisFor('job_1')] } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: jobA, application: null, match: analysisFor('job_1'), careerDirections: [] },
+    })
     const user = userEvent.setup()
     routerHarness('/jobs/job_1')
     await screen.findByLabelText('Score 88 out of 100')
@@ -231,7 +248,9 @@ describe('JobDetailPage', () => {
   })
 
   it('shows the existing application state on load', async () => {
-    mocks.listApplications.mockResolvedValue({ data: { applications: [appFor('job_1')] } })
+    mocks.getJobContext.mockResolvedValue({
+      data: { job: jobA, application: appFor('job_1'), match: null, careerDirections: [] },
+    })
     routerHarness('/jobs/job_1')
     expect(await screen.findByText('Applied')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'View Application' })).toHaveAttribute(
@@ -259,12 +278,26 @@ describe('JobDetailPage', () => {
 
   it('regression: does not leak stale match/application state when the route id changes', async () => {
     const user = userEvent.setup()
-    // job_1 has a cached match + a prior application.
-    mocks.listAnalyses.mockResolvedValue({ data: { analyses: [analysisFor('job_1')] } })
-    mocks.listApplications.mockResolvedValue({ data: { applications: [appFor('job_1')] } })
-
-    // job_2 has NO cached match and NO application.
-    mocks.getJob.mockResolvedValue({ data: { job: jobA } })
+    mocks.getJobContext.mockImplementation(async (id) => {
+      if (id === 'job_1') {
+        return {
+          data: {
+            job: jobA,
+            application: appFor('job_1'),
+            match: analysisFor('job_1'),
+            careerDirections: [],
+          },
+        }
+      }
+      return {
+        data: {
+          job: jobB,
+          application: null,
+          match: null,
+          careerDirections: [],
+        },
+      }
+    })
 
     render(
       <MemoryRouter initialEntries={['/jobs/job_1']}>
@@ -281,8 +314,6 @@ describe('JobDetailPage', () => {
 
     expect(await screen.findByLabelText('Score 88 out of 100')).toBeInTheDocument()
     expect(screen.getByText('Applied')).toBeInTheDocument()
-
-    mocks.getJob.mockResolvedValue({ data: { job: jobB } })
 
     await user.click(screen.getByRole('link', { name: 'Go to job 2' }))
 

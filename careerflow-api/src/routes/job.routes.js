@@ -11,6 +11,7 @@ router.use(protect)
 router.get('/', jobController.listJobs)
 router.post('/', validate(createJobSchema), jobController.createJob)
 router.get('/:id', jobController.getJob)
+router.get('/:id/context', jobController.getJobContext)
 router.patch('/:id', validate(updateJobSchema), jobController.updateJob)
 router.delete('/:id', jobController.deleteJob)
 

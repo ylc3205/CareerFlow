@@ -12,6 +12,7 @@ import interviewRoutes from './routes/interview.routes.js'
 import matchRoutes from './routes/match.routes.js'
 import aiAnalysisRoutes from './routes/aiAnalysis.routes.js'
 import analyticsRoutes from './routes/analytics.routes.js'
+import dashboardRoutes from './routes/dashboard.routes.js'
 import helmet from 'helmet'
 import ApiError from './utils/ApiError.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
@@ -58,6 +59,7 @@ app.use('/api/applications', applicationRoutes)
 app.use('/api/interviews', interviewRoutes)
 app.use('/api/ai-analyses', aiAnalysisRoutes)
 app.use('/api/analytics', analyticsRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 app.use(notFound)
 app.use(errorHandler)

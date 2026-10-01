@@ -10,10 +10,8 @@ import { Button } from '../components/ui/button.jsx'
 import { Select } from '../components/ui/select.jsx'
 import JobFitAnalysis from '../components/jobs/JobFitAnalysis.jsx'
 import ApplyAction from '../components/jobs/ApplyAction.jsx'
-import { getJobApi, deleteJobApi, matchJobApi } from '../api/jobs.api.js'
-import { listAnalysesApi } from '../api/aiAnalysis.api.js'
+import { getJobContextApi, deleteJobApi, matchJobApi } from '../api/jobs.api.js'
 import { createApplicationApi, listApplicationsApi } from '../api/applications.api.js'
-import { listCareerDirectionsApi } from '../api/careerDirections.api.js'
 import { formatDisplayDate, formatSalary } from '../utils/format.js'
 
 export default function JobDetailPage() {
@@ -63,9 +61,20 @@ export default function JobDetailPage() {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await getJobApi(id)
+        const res = await getJobContextApi(id)
         if (cancelled) return
-        setJob(res.data.job)
+        const { job: jobDoc, application, match: matchDoc, careerDirections } = res.data
+        setJob(jobDoc)
+        if (application) {
+          setApplicationId(application._id)
+          setApplied(true)
+        }
+        if (matchDoc) {
+          setMatch(matchDoc)
+        }
+        if (Array.isArray(careerDirections)) {
+          setDirections(careerDirections)
+        }
       } catch (err) {
         if (!cancelled) setLoadError({ message: err.message })
       } finally {
@@ -77,66 +86,6 @@ export default function JobDetailPage() {
       cancelled = true
     }
   }, [id, reloadKey])
-
-  // Load career directions for the selector
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await listCareerDirectionsApi({ limit: 100 })
-        if (cancelled) return
-        setDirections(res.data.careerDirections)
-      } catch {
-        if (!cancelled) setDirections([])
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  // Best-effort: surface an existing cached match for THIS job only. Never triggers AI.
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await listAnalysesApi({ job: id })
-        if (cancelled) return
-        const found = res.data.analyses.find((analysis) => analysis.job && String(analysis.job._id) === String(id))
-        if (found) setMatch(found)
-      } catch {
-        // Ignore: no existing analysis -> the user can trigger Analyze Fit explicitly.
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
-  // Best-effort: if the user already applied to this job, show the Applied state
-  // on load instead of waiting for a duplicate-application 409.
-  useEffect(() => {
-    let cancelled = false
-    const resolve = async () => {
-      try {
-        const res = await listApplicationsApi({ limit: 100 })
-        if (cancelled) return
-        const found = res.data.applications.find((app) => app.job && String(app.job._id) === String(id))
-        if (found) {
-          setApplicationId(found._id)
-          setApplied(true)
-        }
-      } catch {
-        // Best-effort only; the Apply flow still handles 409 duplicates.
-      }
-    }
-    resolve()
-    return () => {
-      cancelled = true
-    }
-  }, [id])
 
   const handleAnalyze = async () => {
     setAnalyzing(true)
@@ -158,8 +107,8 @@ export default function JobDetailPage() {
 
   const resolveExistingApplication = async () => {
     try {
-      const res = await listApplicationsApi({ limit: 100 })
-      const found = res.data.applications.find((app) => app.job && String(app.job._id) === String(id))
+      const res = await listApplicationsApi({ job: id, limit: 1 })
+      const found = res.data.applications?.find((app) => app.job && String(app.job._id || app.job) === String(id)) || res.data.applications?.[0]
       return found ? found._id : null
     } catch {
       return null

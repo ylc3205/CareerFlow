@@ -25,4 +25,6 @@ export const updateJobApi = (jobId, data) => request({ path: `/jobs/${jobId}`, m
 
 export const deleteJobApi = (jobId) => request({ path: `/jobs/${jobId}`, method: 'DELETE' })
 
+export const getJobContextApi = (jobId) => request({ path: `/jobs/${jobId}/context`, method: 'GET' })
+
 export const matchJobApi = (jobId, body = {}) => request({ path: `/jobs/${jobId}/match`, method: 'POST', body })

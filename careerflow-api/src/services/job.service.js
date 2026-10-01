@@ -1,5 +1,8 @@
 import mongoose from 'mongoose'
 import Job, { JOB_STATUSES } from '../models/job.model.js'
+import Application from '../models/application.model.js'
+import AIAnalysis from '../models/aiAnalysis.model.js'
+import CareerDirection from '../models/careerDirection.model.js'
 import ApiError from '../utils/ApiError.js'
 
 const validateObjectId = (id) => {
@@ -62,7 +65,11 @@ const listJobs = async (userId, query = {}) => {
   if (searchFilter) Object.assign(filter, searchFilter)
 
   const total = await Job.countDocuments(filter)
-  const jobsQuery = Job.find(filter)
+  let jobsQuery = Job.find(filter)
+  if (typeof jobsQuery.select === 'function') {
+    jobsQuery = jobsQuery.select('-description -requirements -responsibilities -notes')
+  }
+  jobsQuery = jobsQuery
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
@@ -138,4 +145,26 @@ const deleteJob = async (userId, jobId) => {
   await job.save()
 }
 
-export { listJobs, getJob, createJob, updateJob, deleteJob }
+const getJobContext = async (userId, jobId) => {
+  validateObjectId(jobId)
+
+  const [job, application, match, careerDirections] = await Promise.all([
+    Job.findOne({ _id: jobId, user: userId, isDeleted: { $ne: true } }).lean(),
+    Application.findOne({ user: userId, job: jobId }).select('_id status appliedAt').lean(),
+    AIAnalysis.findOne({ user: userId, job: jobId }).select('-user -__v').lean(),
+    CareerDirection.find({ user: userId }).select('_id title').sort({ createdAt: -1 }).lean(),
+  ])
+
+  if (!job) {
+    throw new ApiError(404, 'Job not found')
+  }
+
+  return {
+    job,
+    application: application || null,
+    match: match || null,
+    careerDirections: careerDirections || [],
+  }
+}
+
+export { listJobs, getJob, createJob, updateJob, deleteJob, getJobContext }

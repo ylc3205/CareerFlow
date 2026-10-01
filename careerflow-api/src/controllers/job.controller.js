@@ -46,4 +46,13 @@ const deleteJob = catchAsync(async (req, res) => {
   })
 })
 
-export { listJobs, getJob, createJob, updateJob, deleteJob }
+const getJobContext = catchAsync(async (req, res) => {
+  const context = await jobService.getJobContext(req.user.userId, req.params.id)
+
+  res.status(200).json({
+    success: true,
+    data: context,
+  })
+})
+
+export { listJobs, getJob, createJob, updateJob, deleteJob, getJobContext }

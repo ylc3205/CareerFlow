@@ -16,10 +16,7 @@ import {
   Video,
 } from 'lucide-react'
 import { useAuth } from '../auth/useAuth.js'
-import { getAnalyticsDashboardApi, getApplicationPipelineApi } from '../api/analytics.api.js'
-import { listJobsApi } from '../api/jobs.api.js'
-import { listApplicationsApi } from '../api/applications.api.js'
-import { listInterviewsApi } from '../api/interviews.api.js'
+import { getDashboardOverviewApi } from '../api/dashboard.api.js'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { Badge } from '../components/ui/badge.jsx'
@@ -84,34 +81,21 @@ export default function DashboardPage() {
       setLoading(true)
       setLoadError(null)
       try {
-        const [dashRes, jobsRes, pipelineRes, intsRes, schedRes, offerRes] = await Promise.allSettled([
-          getAnalyticsDashboardApi(),
-          listJobsApi({ page: 1, limit: 1 }),
-          getApplicationPipelineApi(),
-          listInterviewsApi({ page: 1, limit: 1 }),
-          listInterviewsApi({ status: 'scheduled', page: 1, limit: 50 }),
-          listApplicationsApi({ status: 'offer', page: 1, limit: 1 }),
-        ])
+        const res = await getDashboardOverviewApi()
         if (cancelled) return
 
-        const pipeline = pipelineRes.status === 'fulfilled' ? pipelineRes.value.data.pipeline : null
-        const next = pipeline ? pipeline.byStatus : { applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 }
+        const { overview: ov, pipeline, nextInterview: nextInt, practice } = res.data
+        const next = pipeline?.byStatus || { applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 }
 
-        const scheduled = schedRes.status === 'fulfilled' ? schedRes.value.data.interviews : []
-        const now = Date.now()
-        const upcoming = scheduled
-          .filter((interview) => interview.scheduledDate && new Date(interview.scheduledDate).getTime() >= now)
-          .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate))
-
-        setDashboard(dashRes.status === 'fulfilled' ? dashRes.value.data.dashboard : null)
+        setDashboard(practice || null)
         setOverview({
-          jobs: jobsRes.status === 'fulfilled' ? jobsRes.value.data.pagination.total : null,
-          applications: pipeline ? pipeline.totalApplications : null,
-          interviews: intsRes.status === 'fulfilled' ? intsRes.value.data.pagination.total : null,
-          offers: offerRes.status === 'fulfilled' ? offerRes.value.data.pagination.total : null,
+          jobs: ov?.jobs ?? null,
+          applications: ov?.applications ?? null,
+          interviews: ov?.interviews ?? null,
+          offers: ov?.offers ?? null,
         })
         setCounts(next)
-        setNextInterview(upcoming[0] || null)
+        setNextInterview(nextInt || null)
       } catch (err) {
         if (!cancelled) setLoadError({ message: err.message })
       } finally {

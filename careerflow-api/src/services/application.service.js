@@ -29,7 +29,7 @@ const handleE11000 = (err) => {
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 const listApplications = async (userId, query = {}) => {
-  const { status, search, page, limit } = query
+  const { status, search, job, page, limit } = query
 
   let statusFilter
   if (status !== undefined && status !== '') {
@@ -37,6 +37,12 @@ const listApplications = async (userId, query = {}) => {
       throw new ApiError(400, 'Invalid status filter')
     }
     statusFilter = status
+  }
+
+  if (job) {
+    if (!mongoose.Types.ObjectId.isValid(job)) {
+      throw new ApiError(400, 'Invalid job ID')
+    }
   }
 
   const parsedPage = parseInt(page, 10)
@@ -69,10 +75,26 @@ const listApplications = async (userId, query = {}) => {
 
   const filter = { user: userId }
   if (statusFilter) filter.status = statusFilter
-  if (searchJobIds) filter.job = { $in: searchJobIds }
+  if (job) filter.job = job
+  if (searchJobIds) {
+    if (job) {
+      if (!searchJobIds.some((id) => String(id) === String(job))) {
+        return {
+          applications: [],
+          pagination: { page: normalizedPage, limit: normalizedLimit, total: 0, totalPages: 0 },
+        }
+      }
+    } else {
+      filter.job = { $in: searchJobIds }
+    }
+  }
 
   const total = await Application.countDocuments(filter)
-  const applicationsQuery = Application.find(filter)
+  let applicationsQuery = Application.find(filter)
+  if (typeof applicationsQuery.select === 'function') {
+    applicationsQuery = applicationsQuery.select('-coverLetter -notes')
+  }
+  applicationsQuery = applicationsQuery
     .sort({ createdAt: -1 })
     .skip((normalizedPage - 1) * normalizedLimit)
     .limit(normalizedLimit)

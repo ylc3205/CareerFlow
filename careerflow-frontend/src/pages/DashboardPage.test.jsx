@@ -3,15 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from './DashboardPage.jsx'
-import * as analyticsApi from '../api/analytics.api.js'
-import * as jobsApi from '../api/jobs.api.js'
-import * as applicationsApi from '../api/applications.api.js'
-import * as interviewsApi from '../api/interviews.api.js'
+import * as dashboardApi from '../api/dashboard.api.js'
 
-vi.mock('../api/analytics.api.js')
-vi.mock('../api/jobs.api.js')
-vi.mock('../api/applications.api.js')
-vi.mock('../api/interviews.api.js')
+vi.mock('../api/dashboard.api.js')
 vi.mock('../auth/useAuth.js', () => ({
   useAuth: () => ({ user: { email: 'alex@example.com' } }),
 }))
@@ -71,56 +65,32 @@ describe('DashboardPage', () => {
   }
 
   const futureDate1 = new Date(Date.now() + 86400000 * 2).toISOString() // +2 days
-  const futureDate2 = new Date(Date.now() + 86400000 * 5).toISOString() // +5 days
-  const pastDate = new Date(Date.now() - 86400000 * 3).toISOString() // -3 days
 
-  const mockScheduledInterviews = [
-    {
-      _id: 'int_past',
-      title: 'Past Screening',
-      type: 'phone',
-      scheduledDate: pastDate,
-      application: { job: { company: 'Old Corp' } },
-    },
-    {
-      _id: 'int_near',
-      title: 'Technical Screen',
-      type: 'video',
-      scheduledDate: futureDate1,
-      location: 'Google Meet',
-      meetingLink: 'https://meet.google.com/abc-defg-hij',
-      application: { job: { company: 'VNG Corp' } },
-    },
-    {
-      _id: 'int_far',
-      title: 'Final Director Round',
-      type: 'onsite',
-      scheduledDate: futureDate2,
-      location: 'Building A, Floor 5',
-      application: { job: { company: 'Meta' } },
-    },
-  ]
+  const mockNextInterview = {
+    _id: 'int_near',
+    title: 'Technical Screen',
+    type: 'video',
+    scheduledDate: futureDate1,
+    location: 'Google Meet',
+    meetingLink: 'https://meet.google.com/abc-defg-hij',
+    application: { job: { company: 'VNG Corp' } },
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    analyticsApi.getAnalyticsDashboardApi.mockResolvedValue({
-      data: { dashboard: mockDashboardData },
-    })
-    analyticsApi.getApplicationPipelineApi.mockResolvedValue({
-      data: { pipeline: mockPipelineData },
-    })
-    jobsApi.listJobsApi.mockResolvedValue({
-      data: { pagination: { total: 12 } },
-    })
-    applicationsApi.listApplicationsApi.mockResolvedValue({
-      data: { pagination: { total: 1 } },
-    })
-    interviewsApi.listInterviewsApi.mockImplementation((params = {}) => {
-      if (params.status === 'scheduled') {
-        return Promise.resolve({ data: { interviews: mockScheduledInterviews } })
-      }
-      return Promise.resolve({ data: { pagination: { total: 5 } } })
+    dashboardApi.getDashboardOverviewApi.mockResolvedValue({
+      data: {
+        overview: {
+          jobs: 12,
+          applications: 6,
+          interviews: 5,
+          offers: 1,
+        },
+        pipeline: mockPipelineData,
+        nextInterview: mockNextInterview,
+        practice: mockDashboardData,
+      },
     })
   })
 
@@ -186,10 +156,6 @@ describe('DashboardPage', () => {
       'href',
       'https://meet.google.com/abc-defg-hij'
     )
-
-    // Ensure past interview and later interview are not selected as the primary card
-    expect(screen.queryByText('Past Screening')).not.toBeInTheDocument()
-    expect(screen.queryByText('Final Director Round')).not.toBeInTheDocument()
   })
 
   it('renders practice analytics, recent sessions, and skill areas', async () => {
@@ -210,10 +176,15 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Concurrency')).toBeInTheDocument()
   })
 
-  it('tolerates non-critical API rejection via Promise.allSettled', async () => {
-    // Jobs API and Application Pipeline fail, but dashboard analytics succeeds
-    jobsApi.listJobsApi.mockRejectedValue(new Error('Jobs service unavailable'))
-    analyticsApi.getApplicationPipelineApi.mockRejectedValue(new Error('Pipeline unavailable'))
+  it('tolerates non-critical degradation or partial overview data gracefully', async () => {
+    dashboardApi.getDashboardOverviewApi.mockResolvedValue({
+      data: {
+        overview: { jobs: null, applications: null, interviews: null, offers: null },
+        pipeline: null,
+        nextInterview: mockNextInterview,
+        practice: mockDashboardData,
+      },
+    })
 
     render(
       <MemoryRouter>
@@ -233,11 +204,18 @@ describe('DashboardPage', () => {
   it('renders global error card and allows retry when dashboard endpoint fails', async () => {
     const user = userEvent.setup()
     let shouldFail = true
-    analyticsApi.getAnalyticsDashboardApi.mockImplementation(() => {
+    dashboardApi.getDashboardOverviewApi.mockImplementation(() => {
       if (shouldFail) {
         return Promise.reject(new Error('Dashboard endpoint failed'))
       }
-      return Promise.resolve({ data: { dashboard: mockDashboardData } })
+      return Promise.resolve({
+        data: {
+          overview: { jobs: 12, applications: 6, interviews: 5, offers: 1 },
+          pipeline: mockPipelineData,
+          nextInterview: mockNextInterview,
+          practice: mockDashboardData,
+        },
+      })
     })
 
     render(
@@ -260,16 +238,16 @@ describe('DashboardPage', () => {
   })
 
   it('renders empty states when there are no applications or upcoming interviews', async () => {
-    analyticsApi.getApplicationPipelineApi.mockResolvedValue({
+    dashboardApi.getDashboardOverviewApi.mockResolvedValue({
       data: {
+        overview: { jobs: 0, applications: 0, interviews: 0, offers: 0 },
         pipeline: {
           totalApplications: 0,
           byStatus: { applied: 0, screening: 0, interviewing: 0, offer: 0, rejected: 0, withdrawn: 0 },
         },
+        nextInterview: null,
+        practice: mockDashboardData,
       },
-    })
-    interviewsApi.listInterviewsApi.mockResolvedValue({
-      data: { interviews: [], pagination: { total: 0 } },
     })
 
     render(
