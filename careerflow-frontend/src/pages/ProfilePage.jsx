@@ -10,26 +10,8 @@ import { Input } from '../components/ui/input.jsx'
 import { Textarea } from '../components/ui/textarea.jsx'
 import { Label } from '../components/ui/label.jsx'
 import { Badge } from '../components/ui/badge.jsx'
-import { toDateInputValue, splitList, joinList, compact, newItemId } from '../utils/format.js'
-
-const hydrateEducation = (item) => ({
-  _cid: item._cid ?? item._id ?? newItemId(),
-  school: item.school ?? '',
-  degree: item.degree ?? '',
-  fieldOfStudy: item.fieldOfStudy ?? '',
-  startDate: toDateInputValue(item.startDate),
-  endDate: toDateInputValue(item.endDate),
-})
-
-const hydrateExperience = (item) => ({
-  _cid: item._cid ?? item._id ?? newItemId(),
-  company: item.company ?? '',
-  position: item.position ?? '',
-  description: item.description ?? '',
-  startDate: toDateInputValue(item.startDate),
-  endDate: toDateInputValue(item.endDate),
-  current: Boolean(item.current),
-})
+import { splitList, joinList, compact } from '../utils/format.js'
+import { hydrateEducation, hydrateExperience } from '../utils/resumeForm.js'
 
 const fieldClass = "space-y-2"
 

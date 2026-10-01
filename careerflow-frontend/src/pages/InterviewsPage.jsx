@@ -13,10 +13,11 @@ import { Input } from '../components/ui/input.jsx'
 import { Select } from '../components/ui/select.jsx'
 import { listInterviewsApi, deleteInterviewApi } from '../api/interviews.api.js'
 import { INTERVIEW_STATUSES } from '../utils/constants.js'
+import { useDebounce } from '../hooks/useDebounce.js'
 
 export default function InterviewsPage() {
   const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useDebounce(searchInput, 350)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
@@ -29,14 +30,9 @@ export default function InterviewsPage() {
   const [deletingId, setDeletingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
-  // Lightweight debounce (no library).
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput)
-      setPage(1)
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [searchInput])
+    setPage(1)
+  }, [search])
 
   const handleSearchChange = (event) => {
     setSearchInput(event.target.value)

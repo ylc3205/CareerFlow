@@ -45,9 +45,11 @@ function DirectionsSkeleton() {
   )
 }
 
+import { useDebounce } from '../hooks/useDebounce.js'
+
 export default function CareerDirectionsPage() {
   const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useDebounce(searchInput, 350)
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
 
@@ -60,12 +62,8 @@ export default function CareerDirectionsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput)
-      setPage(1)
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [searchInput])
+    setPage(1)
+  }, [search])
 
   const handleSearchChange = (event) => {
     setSearchInput(event.target.value)

@@ -13,10 +13,11 @@ import { Select } from '../components/ui/select.jsx'
 import { Button } from '../components/ui/button.jsx'
 import { listApplicationsApi, deleteApplicationApi } from '../api/applications.api.js'
 import { APPLICATION_STATUSES } from '../utils/constants.js'
+import { useDebounce } from '../hooks/useDebounce.js'
 
 export default function ApplicationsPage() {
   const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useDebounce(searchInput, 350)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
@@ -29,14 +30,9 @@ export default function ApplicationsPage() {
   const [deletingId, setDeletingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
-  // Lightweight debounce (no library).
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput)
-      setPage(1)
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [searchInput])
+    setPage(1)
+  }, [search])
 
   const handleSearchChange = (event) => {
     setSearchInput(event.target.value)
