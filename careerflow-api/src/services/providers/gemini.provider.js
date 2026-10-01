@@ -3,7 +3,8 @@ import { GoogleGenAI } from '@google/genai'
 const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 const generateStructuredText = async (prompt, schema) => {
-  const apiKey = process.env.GEMINI_API_KEY
+  const rawKey = process.env.GEMINI_API_KEY
+  const apiKey = typeof rawKey === 'string' ? rawKey.trim() : ''
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not configured')
   }

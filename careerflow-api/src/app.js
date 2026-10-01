@@ -12,6 +12,8 @@ import interviewRoutes from './routes/interview.routes.js'
 import matchRoutes from './routes/match.routes.js'
 import aiAnalysisRoutes from './routes/aiAnalysis.routes.js'
 import analyticsRoutes from './routes/analytics.routes.js'
+import helmet from 'helmet'
+import ApiError from './utils/ApiError.js'
 import { notFound, errorHandler } from './middlewares/error.middleware.js'
 
 export const parseAllowedOrigins = (raw) => {
@@ -29,20 +31,13 @@ export const getCorsOriginDelegate = (rawOrigins = process.env.CLIENT_URL) => {
     if (allowedOrigins.includes(origin)) {
       return callback(null, true)
     }
-    try {
-      const url = new URL(origin)
-      if (url.protocol === 'https:' && (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app')) {
-        return callback(null, true)
-      }
-    } catch {
-      // ignore invalid URL format
-    }
-    return callback(new Error('Not allowed by CORS'))
+    return callback(new ApiError(403, 'Not allowed by CORS'))
   }
 }
 
 const app = express()
 
+app.use(helmet())
 app.use(
   cors({
     origin: (origin, callback) => getCorsOriginDelegate()(origin, callback),

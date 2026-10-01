@@ -17,8 +17,24 @@ const errorHandler = (err, req, res, next) => {
     return res.status(statusCode).json({ success: false, message })
   }
 
+  if (err && err.name === 'CastError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid resource identifier',
+    })
+  }
+
   const statusCode = err.statusCode || 500
-  const message = err.message || 'Internal Server Error'
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  let message = err.message || 'Internal Server Error'
+
+  if (statusCode >= 500) {
+    console.error(`[ERROR] ${new Date().toISOString()} ${req.method} ${req.originalUrl}:`, err)
+    if (isProduction && !err.isOperational) {
+      message = 'Internal Server Error'
+    }
+  }
 
   res.status(statusCode).json({
     success: false,

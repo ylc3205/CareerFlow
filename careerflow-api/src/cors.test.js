@@ -67,4 +67,29 @@ describe('CORS Configuration', () => {
     expect(err.message).toBe('Not allowed by CORS')
     expect(allowed).toBeUndefined()
   })
+
+  it('rejects arbitrary unconfigured *.vercel.app origins (SEC-CORS-01)', () => {
+    const delegate = getCorsOriginDelegate('http://localhost:5173')
+    let allowed = false
+    let err = null
+    delegate('https://malicious-phishing.vercel.app', (e, res) => {
+      err = e
+      allowed = res
+    })
+    expect(err).toBeInstanceOf(Error)
+    expect(err.message).toBe('Not allowed by CORS')
+    expect(allowed).toBeUndefined()
+  })
+
+  it('allows explicitly configured vercel domain when listed in CLIENT_URL', () => {
+    const delegate = getCorsOriginDelegate('http://localhost:5173,https://my-careerflow.vercel.app')
+    let allowed = false
+    let err = null
+    delegate('https://my-careerflow.vercel.app', (e, res) => {
+      err = e
+      allowed = res
+    })
+    expect(err).toBeNull()
+    expect(allowed).toBe(true)
+  })
 })
