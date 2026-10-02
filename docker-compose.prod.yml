@@ -1,0 +1,115 @@
+services:
+  # ---------------------------------------------------------------------------
+  # 1. MongoDB Database Service (Zero Public/Host Port Exposure)
+  # ---------------------------------------------------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: careerflow-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo-prod-data:/data/db
+    networks:
+      - careerflow-prod-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # 2. Express Backend API Service (Strict Loopback Binding)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./careerflow-api
+      dockerfile: Dockerfile
+    container_name: careerflow-api
+    restart: unless-stopped
+    ports:
+      # STRICT LOCALHOST BINDING: Host Nginx reaches it, public internet cannot bypass UFW
+      - "127.0.0.1:5000:5000"
+    env_file:
+      - .env.production
+    volumes:
+      - backend-prod-storage:/app/.storage
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - careerflow-prod-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # 3. Frontend SPA Web Application (Strict Loopback Binding)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./careerflow-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.yourdomain.com/api}
+    container_name: careerflow-frontend
+    restart: unless-stopped
+    ports:
+      # STRICT LOCALHOST BINDING: Host Nginx reaches it, public internet cannot bypass UFW
+      - "127.0.0.1:3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - careerflow-prod-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+# ---------------------------------------------------------------------------
+# Named Volumes & Private Network
+# ---------------------------------------------------------------------------
+volumes:
+  mongo-prod-data:
+    driver: local
+  backend-prod-storage:
+    driver: local
+
+networks:
+  careerflow-prod-network:
+    driver: bridge
