@@ -32,7 +32,7 @@ USER node
 EXPOSE 5000
 
 # Native health check against readiness probe
-HEALTHCHECK --interval=20s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/health/ready || exit 1
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:5000/api/health/ready || exit 1
 
 CMD ["node", "src/server.js"]
